@@ -21,4 +21,4 @@ document.getElementById("tableauViz").appendChild(viz);
 
 </body>  
 
-</HTML>
+</html>
