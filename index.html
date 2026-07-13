@@ -266,9 +266,11 @@
       <div class="sub" id="dateRangeLabel">লোড হচ্ছে…</div>
     </div>
     <div class="clock-badge">
-      <div class="lbl">সর্বশেষ রেকর্ড <span id="sourceBadge" style="opacity:.7;">· লোড হচ্ছে…</span></div>
+      <div class="lbl">সর্বশেষ রেকর্ড</div>
       <div class="time" id="lastUpdated">—</div>
       <div class="lbl" id="refreshBadge" style="margin-top:5px;font-size:10px;">—</div>
+      <div id="protocolWarn" style="display:none;margin-top:6px;font-size:10px;color:var(--heat-500);max-width:220px;line-height:1.5;"></div>
+      <button id="manualRefreshBtn" style="margin-top:8px;font-family:var(--font-mono);font-size:10px;background:var(--bg-0);border:1px solid var(--line);color:var(--text-1);border-radius:6px;padding:5px 10px;cursor:pointer;">↻ এখনই রিফ্রেশ করুন</button>
     </div>
   </header>
 
@@ -309,45 +311,6 @@
       <div class="stat"><div class="lbl">বৃষ্টিপাত (আজ)</div><div class="num" id="statRain">—<span>মিমি</span></div></div>
     </div>
   </section>
-
-  <!-- SAFETY GUIDANCE -->
-  <div class="section-title"><h2>সুরক্ষা ও পরামর্শ</h2><span class="tag">Safety Guidance</span></div>
-  <div class="safety-grid">
-    <div class="panel safety-card">
-      <div class="safety-icon safe">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 3c1.6 1.6 1.6 3.4 0 5-1.6-1.6-1.6-3.4 0-5Z"/>
-          <path d="M6 24V15c0-3 2-5.5 4-6.5V24"/>
-          <path d="M22 24V15c0-3-2-5.5-4-6.5V24"/>
-          <path d="M10 24v-5a4 4 0 0 1 8 0v5"/>
-          <path d="M3 24h22"/>
-          <path d="M3 21h4M21 21h4"/>
-        </svg>
-      </div>
-      <p>শহরের মসজিদগুলোতে সকাল ১১টা থেকে মাগরিব পর্যন্ত বিশ্রাম ও পানির সুবিধা আছে।</p>
-    </div>
-    <div class="panel safety-card">
-      <div class="safety-icon alert">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 5c0 8.3 6.7 15 15 15l2-4-5-2-2 2c-2.2-1-4-2.8-5-5l2-2-2-5-4 1Z"/>
-        </svg>
-      </div>
-      <p>জাতীয় জরুরি সেবা <b>৯৯৯</b>-এ, হিটস্ট্রোক সংক্রান্ত যেকোনো প্রয়োজনে কল করুন।</p>
-    </div>
-  </div>
-
-  <div class="panel checklist-panel">
-    <h3>অতিরিক্ত তাপপ্রবাহ বা হিটওয়েভ চলাকালীন সময়ে করণীয়</h3>
-    <ul class="checklist">
-      <li>রোদ এড়িয়ে চলুন (দুপুর ১২টা থেকে বিকেল ৪টা)</li>
-      <li>প্রচুর পরিমাণে বিশুদ্ধ পানি পান করুন</li>
-      <li>শিশু, বয়স্ক, প্রতিবন্ধী, শ্রমজীবী এবং শারীরিকভাবে অসুস্থ ব্যক্তির প্রতি বিশেষ লক্ষ্য রাখুন</li>
-      <li>সম্ভব হলে মাঝে মাঝে চোখে-মুখে পানির ঝাপটা দিন</li>
-      <li>সহজে হজম হয় এমন খাবার খাওয়ার চেষ্টা করুন</li>
-      <li>বেশি অসুস্থ বোধ করলে দ্রুত নিকটস্থ চিকিৎসকের পরামর্শ নিন</li>
-    </ul>
-    <div class="src-line">সূত্র: WHO (বিশ্ব স্বাস্থ্য সংস্থা)</div>
-  </div>
 
   <!-- CHARTS -->
   <div class="section-title"><h2>আবহাওয়া প্রবণতা</h2><span class="tag">Last 7 Days</span></div>
@@ -452,10 +415,6 @@
     </div>
   </div>
 
-  <footer class="page-foot">
-    <span>Source: Heat_stroke_centre_dashboard.xlsx</span>
-    <span id="footRange">—</span>
-  </footer>
 
 </div>
 
@@ -583,11 +542,7 @@
 
     document.getElementById('dateRangeLabel').textContent =
       first.date + ' — ' + latest.date + ' পর্যন্ত রেকর্ড';
-    document.getElementById('footRange').textContent =
-      W.length + ' দিনের তথ্য · ' + first.date + ' থেকে ' + latest.date;
     document.getElementById('lastUpdated').textContent = latest.time ? (latest.date + ' ' + latest.time) : latest.date;
-    document.getElementById('sourceBadge').textContent =
-      isLive ? '· লাইভ (Google Sheets)' : '· স্ন্যাপশট (অফলাইন কপি)';
 
     const curTemp = latest.current ?? latest.avg;
     const pct = Math.max(0, Math.min(1, (curTemp - 15) / (40 - 15)));
@@ -806,6 +761,7 @@
 
   const REFRESH_MS = 10 * 60 * 1000; // re-check the Google Sheet every 10 minutes
   let hasRenderedOnce = false;
+  let refreshInFlight = false;
 
   function setRefreshBadge(text){
     const b = document.getElementById('refreshBadge');
@@ -816,12 +772,23 @@
     return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
   }
 
-  async function refreshCycle(){
+  // opening the file directly (double-click) loads it as file:// — browsers block
+  // fetch() to external sites from that origin, so live data can never load this way.
+  if(location.protocol === 'file:'){
+    const w = document.getElementById('protocolWarn');
+    w.style.display = 'block';
+    w.textContent = '⚠ ফাইলটি সরাসরি খোলা হয়েছে (file://) — এই অবস্থায় ব্রাউজার লাইভ ডেটা আনতে বাধা দেয়। ওয়েবে হোস্ট করুন (যেমন GitHub Pages) অথবা লোকাল সার্ভার দিয়ে খুলুন।';
+  }
+
+  async function refreshCycle(isManual){
+    if(refreshInFlight) return;
+    refreshInFlight = true;
+    if(isManual) setRefreshBadge('যাচাই করা হচ্ছে…');
     try{
       const live = await loadLiveData();
       renderDashboard(live, true);
       hasRenderedOnce = true;
-      setRefreshBadge('প্রতি ১০ মিনিটে অটো-রিফ্রেশ · সর্বশেষ যাচাই ' + nowHM());
+      setRefreshBadge('সর্বশেষ যাচাই ' + nowHM());
     } catch(err){
       console.warn('Live Google Sheets fetch failed:', err);
       if(!hasRenderedOnce){
@@ -829,12 +796,17 @@
         renderDashboard(DASH_DATA, false);
         hasRenderedOnce = true;
       }
-      setRefreshBadge('সংযোগ ব্যর্থ · সর্বশেষ চেষ্টা ' + nowHM() + ' · পরের চেষ্টা ১০ মিনিটে');
+      const reason = (err && err.name === 'AbortError') ? 'সময় শেষ (timeout)' : ((err && err.message) || 'অজানা ত্রুটি');
+      setRefreshBadge('সংযোগ ব্যর্থ (' + reason + ') · সর্বশেষ চেষ্টা ' + nowHM());
+    } finally {
+      refreshInFlight = false;
     }
   }
 
-  refreshCycle();
-  setInterval(refreshCycle, REFRESH_MS);
+  document.getElementById('manualRefreshBtn').addEventListener('click', ()=> refreshCycle(true));
+
+  refreshCycle(false);
+  setInterval(()=>refreshCycle(false), REFRESH_MS);
 })();
 </script>
 </body>
