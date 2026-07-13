@@ -1,24 +1,841 @@
 <!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>হিট স্ট্রোক রেসপন্স ড্যাশবোর্ড — ঢাকা</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#f6f1e7;
+    --bg-1:#ffffff;
+    --bg-2:#fdfaf4;
+    --line:#e3d9c6;
+    --text-0:#241d17;
+    --text-1:#5c5245;
+    --text-2:#8c8073;
+    --heat-500:#e14a2a;
+    --heat-300:#c73d1f;
+    --heat-glow:rgba(225,74,42,.18);
+    --safe-500:#1a9268;
+    --safe-glow:rgba(26,146,104,.16);
+    --info-500:#c98815;
+    --rain-500:#2f7fb0;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:8px;
+    --font-bn:'Noto Sans Bengali',sans-serif;
+    --font-display:'Space Grotesk',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(225,74,42,.05), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(26,146,104,.05), transparent 55%),
+      var(--bg-0);
+    color:var(--text-0);
+    font-family:var(--font-bn);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;}
+  ::selection{background:var(--heat-glow);}
+  :focus-visible{outline:2px solid var(--heat-300);outline-offset:3px;border-radius:4px;}
 
-<html>  
-<title>Heat stroke information dashboard</title>  
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 64px;}
+
+  /* ---------- header ---------- */
+  header.top{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    gap:16px;flex-wrap:wrap;
+    padding-bottom:22px;margin-bottom:26px;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand .eyebrow{
+    font-family:var(--font-mono);letter-spacing:.14em;text-transform:uppercase;
+    font-size:11px;color:var(--text-2);
+  }
+  .brand h1{
+    margin:0;font-size:26px;font-weight:700;color:var(--text-0);
+  }
+  .brand .sub{font-size:13px;color:var(--text-1);font-family:var(--font-mono);}
+  .clock-badge{
+    text-align:right;font-family:var(--font-mono);color:var(--text-1);font-size:12px;
+  }
+  .clock-badge .time{font-size:20px;color:var(--text-0);font-weight:600;letter-spacing:.02em;}
+
+  /* ---------- hero ---------- */
+  .hero{
+    display:grid;grid-template-columns:1.15fr 1fr;gap:18px;margin-bottom:22px;
+  }
+  @media (max-width:820px){ .hero{grid-template-columns:1fr;} }
+
+  .panel{
+    background:linear-gradient(180deg,var(--bg-2),var(--bg-1));
+    border:1px solid var(--line);
+    border-radius:var(--radius-lg);
+    padding:22px 24px;
+    box-shadow:0 1px 2px rgba(36,29,23,.04), 0 10px 28px rgba(36,29,23,.05);
+  }
+
+  .gauge-card{
+    display:flex;align-items:center;gap:22px;position:relative;overflow:hidden;
+  }
+  .gauge-card::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(320px 200px at 15% 20%, var(--safe-glow), transparent 70%);
+    pointer-events:none;
+  }
+  .gauge-wrap{position:relative;width:168px;height:168px;flex:none;}
+  .gauge-wrap svg{width:100%;height:100%;transform:rotate(-90deg);}
+  .gauge-track{fill:none;stroke:var(--line);stroke-width:12;}
+  .gauge-fill{fill:none;stroke:url(#gaugeGrad);stroke-width:12;stroke-linecap:round;transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);}
+  .gauge-center{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  }
+  .gauge-center .val{font-family:var(--font-display);font-size:40px;font-weight:700;line-height:1;color:var(--text-0);}
+  .gauge-center .unit{font-family:var(--font-mono);font-size:12px;color:var(--text-2);margin-top:2px;}
+
+  .gauge-meta{position:relative;flex:1;min-width:0;}
+  .gauge-meta .label{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-2);}
+  .status-pill{
+    display:inline-flex;align-items:center;gap:8px;
+    margin:8px 0 12px;padding:7px 14px;border-radius:999px;
+    font-size:13px;font-weight:600;
+    background:rgba(26,146,104,.10);border:1px solid rgba(26,146,104,.35);color:var(--safe-500);
+  }
+  .status-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--safe-500);box-shadow:0 0 0 4px var(--safe-glow);}
+  .status-pill.alert{background:rgba(225,74,42,.12);border-color:rgba(225,74,42,.4);color:var(--heat-500);}
+  .status-pill.alert .dot{background:var(--heat-500);box-shadow:0 0 0 4px var(--heat-glow);animation:pulse 1.6s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  @media (prefers-reduced-motion: reduce){ .status-pill.alert .dot{animation:none;} }
+
+  .meta-row{display:flex;gap:22px;flex-wrap:wrap;margin-top:6px;}
+  .meta-item .num{font-family:var(--font-mono);font-size:18px;font-weight:600;color:var(--text-0);}
+  .meta-item .lbl{font-size:12px;color:var(--text-2);margin-top:2px;}
+
+  .stats-card{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .stat{
+    background:var(--bg-0);border:1px solid var(--line);border-radius:var(--radius-md);
+    padding:14px 16px;
+  }
+  .stat .lbl{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-2);}
+  .stat .num{font-family:var(--font-display);font-size:24px;font-weight:600;margin-top:6px;color:var(--text-0);}
+  .stat .num span{font-size:14px;color:var(--text-2);font-family:var(--font-mono);font-weight:400;}
+
+  /* ---------- section titles ---------- */
+  .section-title{
+    display:flex;align-items:baseline;gap:10px;margin:34px 0 14px;
+  }
+  .section-title h2{font-size:16px;margin:0;color:var(--text-0);font-weight:700;}
+  .section-title .tag{font-family:var(--font-mono);font-size:11px;color:var(--text-2);letter-spacing:.08em;text-transform:uppercase;}
+  .section-title::after{content:"";flex:1;height:1px;background:var(--line);}
+
+  /* ---------- charts ---------- */
+  .chart-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;}
+  @media (max-width:900px){ .chart-grid{grid-template-columns:1fr;} }
+  .chart-card h3{margin:0 0 2px;font-size:14px;color:var(--text-0);}
+  .chart-card .desc{font-size:12px;color:var(--text-2);margin-bottom:14px;}
+  .chart-card svg{width:100%;height:240px;display:block;overflow:visible;}
+  .legend-row{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;}
+  .legend-row .item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-1);font-family:var(--font-mono);}
+  .legend-row .sw{width:10px;height:10px;border-radius:3px;}
+  .chart-tooltip{
+    position:absolute;pointer-events:none;background:#ffffff;border:1px solid var(--line);box-shadow:0 8px 24px rgba(36,29,23,.12);
+    border-radius:8px;padding:8px 10px;font-family:var(--font-mono);font-size:11px;color:var(--text-0);
+    transform:translate(-50%,-115%);white-space:nowrap;opacity:0;transition:opacity .1s;z-index:5;
+  }
+  .chart-tooltip.active{opacity:1;}
+  .chart-wrap{position:relative;}
+
+  /* ---------- emergency row ---------- */
+  .em-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:18px;}
+  @media (max-width:900px){ .em-grid{grid-template-columns:1fr;} }
+
+  /* ---------- safety guidance ---------- */
+  .safety-grid{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:18px;}
+  @media (max-width:900px){ .safety-grid{grid-template-columns:1fr;} }
+  .safety-callout{
+    display:flex;flex-direction:column;align-items:flex-start;gap:10px;
+  }
+  .safety-callout .icon-badge{
+    width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    flex:none;
+  }
+  .safety-callout.emergency .icon-badge{background:rgba(225,74,42,.12);color:var(--heat-500);}
+  .safety-callout.mosque .icon-badge{background:rgba(201,136,21,.14);color:var(--info-500);}
+  .safety-callout .sc-title{font-size:13px;color:var(--text-2);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.06em;}
+  .safety-callout .sc-big{font-family:var(--font-display);font-size:26px;font-weight:700;color:var(--text-0);}
+  .safety-callout .sc-body{font-size:13.5px;color:var(--text-1);line-height:1.65;}
+  .safety-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
+  .safety-list li{
+    display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--text-1);line-height:1.55;
+  }
+  .safety-list .check{
+    flex:none;width:18px;height:18px;border-radius:5px;background:rgba(26,146,104,.14);color:var(--safe-500);
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-top:1px;
+  }
+  .safety-source{font-size:11px;color:var(--text-2);font-family:var(--font-mono);margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);}
+
+  /* ---------- safety guidance ---------- */
+  .safety-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+  @media (max-width:700px){ .safety-grid{grid-template-columns:1fr;} }
+  .safety-card{display:flex;align-items:center;gap:16px;}
+  .safety-icon{
+    flex:none;width:52px;height:52px;border-radius:14px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .safety-icon.safe{background:rgba(26,146,104,.12);}
+  .safety-icon.safe svg{stroke:var(--safe-500);}
+  .safety-icon.alert{background:rgba(225,74,42,.12);}
+  .safety-icon.alert svg{stroke:var(--heat-500);}
+  .safety-card p{margin:0;font-size:14px;color:var(--text-0);line-height:1.6;}
+  .safety-card p b{color:var(--heat-500);font-family:var(--font-mono);}
+
+  .checklist-panel h3{margin:0 0 14px;font-size:15px;color:var(--text-0);}
+  .checklist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;}
+  @media (max-width:700px){ .checklist{grid-template-columns:1fr;} }
+  .checklist li{
+    display:flex;align-items:flex-start;gap:10px;font-size:13.5px;color:var(--text-1);line-height:1.6;
+  }
+  .checklist li::before{
+    content:"✓";flex:none;width:20px;height:20px;border-radius:50%;
+    background:rgba(26,146,104,.14);color:var(--safe-500);font-size:12px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;margin-top:1px;
+  }
+  .src-line{
+    margin-top:16px;padding-top:12px;border-top:1px dashed var(--line);
+    font-size:11.5px;color:var(--text-2);font-family:var(--font-mono);
+  }
+
+  .hosp-name{font-size:17px;font-weight:700;color:var(--text-0);margin:0 0 4px;}
+  .hosp-addr{font-size:13px;color:var(--text-1);margin:0 0 14px;}
+  .bed-row{display:flex;gap:10px;margin-bottom:16px;}
+  .bed-chip{
+    flex:1;background:var(--bg-0);border:1px solid var(--line);border-radius:var(--radius-sm);
+    padding:10px 12px;text-align:center;
+  }
+  .bed-chip .n{font-family:var(--font-display);font-size:22px;font-weight:700;}
+  .bed-chip.total .n{color:var(--text-0);}
+  .bed-chip.gen .n{color:var(--info-500);}
+  .bed-chip.icu .n{color:var(--heat-500);}
+  .bed-chip .l{font-size:10px;color:var(--text-2);text-transform:uppercase;letter-spacing:.08em;font-family:var(--font-mono);margin-top:3px;}
+  .contact-line{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--text-1);margin-top:8px;}
+  .contact-line b{color:var(--text-0);font-weight:600;min-width:64px;flex:none;font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding-top:2px;}
+  .hosp-details{font-size:12.5px;color:var(--text-2);margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);line-height:1.7;}
+
+  table.amb-table{width:100%;border-collapse:collapse;font-size:13px;}
+  table.amb-table th{
+    text-align:left;font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--text-2);padding:0 10px 10px;font-weight:500;border-bottom:1px solid var(--line);
+  }
+  table.amb-table td{padding:11px 10px;border-bottom:1px solid var(--line);color:var(--text-1);vertical-align:top;}
+  table.amb-table tr:last-child td{border-bottom:none;}
+  table.amb-table td.name{color:var(--text-0);font-weight:600;}
+  table.amb-table td.phone{font-family:var(--font-mono);font-size:12px;color:var(--safe-500);white-space:nowrap;}
+  table.amb-table td.veh{font-family:var(--font-mono);font-size:11.5px;color:var(--text-2);}
+
+  /* ---------- footer ---------- */
+  .foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;}
+  @media (max-width:820px){ .foot-grid{grid-template-columns:1fr;} }
+  .views-card{display:flex;align-items:center;gap:18px;}
+  .views-num{font-family:var(--font-display);font-size:34px;font-weight:700;}
+  .views-lbl{font-size:12px;color:var(--text-2);margin-top:4px;}
+  .sparkwrap{flex:1;height:60px;}
+  .note-card{font-size:12.5px;color:var(--text-2);line-height:1.7;display:flex;align-items:center;}
+  .note-card b{color:var(--text-1);}
+
+  footer.page-foot{
+    margin-top:34px;padding-top:18px;border-top:1px solid var(--line);
+    font-size:11.5px;color:var(--text-2);font-family:var(--font-mono);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  }
+</style>
+</head>
 <body>
- 
-<script type="module">
-import { TableauViz } from "https://public.tableau.com/javascripts/api/tableau.embedding.3.latest.js";  
+<div class="wrap">
 
-const viz = new TableauViz();
+  <header class="top">
+    <div class="brand">
+      <div class="eyebrow">Heat&nbsp;Stroke&nbsp;Response&nbsp;Network</div>
+      <h1>হিট স্ট্রোক রেসপন্স ড্যাশবোর্ড — ঢাকা</h1>
+      <div class="sub" id="dateRangeLabel">লোড হচ্ছে…</div>
+    </div>
+    <div class="clock-badge">
+      <div class="lbl">সর্বশেষ রেকর্ড <span id="sourceBadge" style="opacity:.7;">· লোড হচ্ছে…</span></div>
+      <div class="time" id="lastUpdated">—</div>
+      <div class="lbl" id="refreshBadge" style="margin-top:5px;font-size:10px;">—</div>
+    </div>
+  </header>
 
-viz.src = "https://public.tableau.com/views/Heatstrokecentreinformationdashboard_17491204590200/heat_stroke_dashboard?:language=en-US&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link";
-viz.toolbar = "hidden";
+  <!-- HERO -->
+  <section class="hero">
+    <div class="panel gauge-card">
+      <div class="gauge-wrap">
+        <svg viewBox="0 0 168 168">
+          <defs>
+            <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#1a9268"/>
+              <stop offset="55%" stop-color="#c98815"/>
+              <stop offset="100%" stop-color="#e14a2a"/>
+            </linearGradient>
+          </defs>
+          <circle class="gauge-track" cx="84" cy="84" r="74"/>
+          <circle class="gauge-fill" id="gaugeFill" cx="84" cy="84" r="74"
+                  stroke-dasharray="464.9" stroke-dashoffset="464.9"/>
+        </svg>
+        <div class="gauge-center">
+          <div class="val" id="gaugeVal">—</div>
+          <div class="unit">°সে · বর্তমান</div>
+        </div>
+      </div>
+      <div class="gauge-meta">
+        <div class="label">তাপপ্রবাহ সংকেত</div>
+        <div class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">লোড হচ্ছে…</span></div>
+        <div class="meta-row">
+          <div class="meta-item"><div class="num" id="metaHi">—°</div><div class="lbl">দিনের সর্বোচ্চ</div></div>
+          <div class="meta-item"><div class="num" id="metaLo">—°</div><div class="lbl">দিনের সর্বনিম্ন</div></div>
+          <div class="meta-item"><div class="num" id="metaAvg">—°</div><div class="lbl">গড় তাপমাত্রা</div></div>
+        </div>
+      </div>
+    </div>
 
-document.getElementById("tableauViz").appendChild(viz);  
-</script>  
+    <div class="panel stats-card">
+      <div class="stat"><div class="lbl">আর্দ্রতা</div><div class="num" id="statHum">—<span>%</span></div></div>
+      <div class="stat"><div class="lbl">বৃষ্টিপাত (আজ)</div><div class="num" id="statRain">—<span>মিমি</span></div></div>
+    </div>
+  </section>
 
-<div style="width:1000px; height:500px;">
-<div id="tableauViz"></div>
-</div>  
+  <!-- SAFETY GUIDANCE -->
+  <div class="section-title"><h2>সুরক্ষা ও পরামর্শ</h2><span class="tag">Safety Guidance</span></div>
+  <div class="safety-grid">
+    <div class="panel safety-card">
+      <div class="safety-icon safe">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 3c1.6 1.6 1.6 3.4 0 5-1.6-1.6-1.6-3.4 0-5Z"/>
+          <path d="M6 24V15c0-3 2-5.5 4-6.5V24"/>
+          <path d="M22 24V15c0-3-2-5.5-4-6.5V24"/>
+          <path d="M10 24v-5a4 4 0 0 1 8 0v5"/>
+          <path d="M3 24h22"/>
+          <path d="M3 21h4M21 21h4"/>
+        </svg>
+      </div>
+      <p>শহরের মসজিদগুলোতে সকাল ১১টা থেকে মাগরিব পর্যন্ত বিশ্রাম ও পানির সুবিধা আছে।</p>
+    </div>
+    <div class="panel safety-card">
+      <div class="safety-icon alert">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 5c0 8.3 6.7 15 15 15l2-4-5-2-2 2c-2.2-1-4-2.8-5-5l2-2-2-5-4 1Z"/>
+        </svg>
+      </div>
+      <p>জাতীয় জরুরি সেবা <b>৯৯৯</b>-এ, হিটস্ট্রোক সংক্রান্ত যেকোনো প্রয়োজনে কল করুন।</p>
+    </div>
+  </div>
 
-</body>  
+  <div class="panel checklist-panel">
+    <h3>অতিরিক্ত তাপপ্রবাহ বা হিটওয়েভ চলাকালীন সময়ে করণীয়</h3>
+    <ul class="checklist">
+      <li>রোদ এড়িয়ে চলুন (দুপুর ১২টা থেকে বিকেল ৪টা)</li>
+      <li>প্রচুর পরিমাণে বিশুদ্ধ পানি পান করুন</li>
+      <li>শিশু, বয়স্ক, প্রতিবন্ধী, শ্রমজীবী এবং শারীরিকভাবে অসুস্থ ব্যক্তির প্রতি বিশেষ লক্ষ্য রাখুন</li>
+      <li>সম্ভব হলে মাঝে মাঝে চোখে-মুখে পানির ঝাপটা দিন</li>
+      <li>সহজে হজম হয় এমন খাবার খাওয়ার চেষ্টা করুন</li>
+      <li>বেশি অসুস্থ বোধ করলে দ্রুত নিকটস্থ চিকিৎসকের পরামর্শ নিন</li>
+    </ul>
+    <div class="src-line">সূত্র: WHO (বিশ্ব স্বাস্থ্য সংস্থা)</div>
+  </div>
 
-</HTML>
+  <!-- CHARTS -->
+  <div class="section-title"><h2>আবহাওয়া প্রবণতা</h2><span class="tag">Last 7 Days</span></div>
+  <div style="font-size:11.5px;color:var(--text-2);font-family:var(--font-mono);margin:-6px 0 14px;">উৎস: বাংলাদেশ আবহাওয়া অধিদপ্তর</div>
+  <div class="chart-grid">
+    <div class="panel chart-card">
+      <h3>তাপমাত্রা (সর্বোচ্চ / সর্বনিম্ন / গড়)</h3>
+      <div class="desc">সাম্প্রতিক ৭ দিনের তাপমাত্রা, °সেলসিয়াস</div>
+      <div class="chart-wrap">
+        <svg id="tempChart" viewBox="0 0 640 240" preserveAspectRatio="none"></svg>
+        <div class="chart-tooltip" id="tempTooltip"></div>
+      </div>
+      <div class="legend-row">
+        <div class="item"><span class="sw" style="background:#e14a2a"></span>সর্বোচ্চ</div>
+        <div class="item"><span class="sw" style="background:#c98815"></span>গড়</div>
+        <div class="item"><span class="sw" style="background:#2f7fb0"></span>সর্বনিম্ন</div>
+      </div>
+    </div>
+    <div class="panel chart-card">
+      <h3>আর্দ্রতা ও বৃষ্টিপাত</h3>
+      <div class="desc">সাম্প্রতিক ৭ দিনের আর্দ্রতা (%) ও বৃষ্টিপাত (মিমি)</div>
+      <div class="chart-wrap">
+        <svg id="humChart" viewBox="0 0 640 240" preserveAspectRatio="none"></svg>
+        <div class="chart-tooltip" id="humTooltip"></div>
+      </div>
+      <div class="legend-row">
+        <div class="item"><span class="sw" style="background:#2f7fb0"></span>আর্দ্রতা</div>
+        <div class="item"><span class="sw" style="background:#1a9268"></span>বৃষ্টিপাত</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAFETY GUIDANCE -->
+  <div class="section-title"><h2>তাপপ্রবাহ চলাকালীন করণীয়</h2><span class="tag">Heatwave Safety</span></div>
+  <div class="safety-grid">
+    <div class="panel safety-callout emergency">
+      <div class="icon-badge">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      </div>
+      <div class="sc-title">জাতীয় জরুরি সেবা</div>
+      <div class="sc-big">৯৯৯</div>
+      <div class="sc-body">হিটস্ট্রোক সংক্রান্ত যেকোনো প্রয়োজনে সরাসরি কল করুন — সম্পূর্ণ নিখরচায়, ২৪ ঘণ্টা সচল।</div>
+    </div>
+
+    <div class="panel safety-callout mosque">
+      <div class="icon-badge">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V10l7-6 7 6v11"/><path d="M9 21v-6a3 3 0 0 1 6 0v6"/></svg>
+      </div>
+      <div class="sc-title">বিশ্রাম ও পানির সুবিধা</div>
+      <div class="sc-big">১১টা – মাগরিব</div>
+      <div class="sc-body">শহরের মসজিদগুলোতে সকাল ১১টা থেকে মাগরিব পর্যন্ত বিশ্রাম ও বিশুদ্ধ পানির সুবিধা খোলা থাকে।</div>
+    </div>
+
+    <div class="panel">
+      <div class="sc-title" style="margin-bottom:12px;">অতিরিক্ত তাপপ্রবাহ চলাকালীন সময়ে করণীয়</div>
+      <ul class="safety-list">
+        <li><span class="check">✓</span>রোদ এড়িয়ে চলুন (দুপুর ১২টা থেকে বিকেল ৪টা)</li>
+        <li><span class="check">✓</span>প্রচুর পরিমাণে বিশুদ্ধ পানি পান করুন</li>
+        <li><span class="check">✓</span>শিশু, বয়স্ক, প্রতিবন্ধী, শ্রমজীবি এবং শারীরিকভাবে অসুস্থ ব্যক্তির প্রতি বিশেষ লক্ষ্য রাখুন</li>
+        <li><span class="check">✓</span>সম্ভব হলে মাঝে মাঝে চোখে মুখে পানির ঝাপটা দিন</li>
+        <li><span class="check">✓</span>সহজে হজম হয় এমন খাবার খাওয়ার চেষ্টা করুন</li>
+        <li><span class="check">✓</span>বেশি অসুস্থ বোধ করলে দ্রুত নিকটস্থ চিকিৎসকের পরামর্শ নিন</li>
+      </ul>
+      <div class="safety-source">সূত্র: WHO</div>
+    </div>
+  </div>
+
+  <!-- EMERGENCY -->
+  <div class="section-title"><h2>জরুরি প্রতিক্রিয়া কেন্দ্র</h2><span class="tag">Hospital &amp; Ambulance</span></div>
+  <div class="em-grid">
+    <div class="panel" id="hospCard">
+      <p class="hosp-name" id="hospName">—</p>
+      <p class="hosp-addr" id="hospAddr">—</p>
+      <div class="bed-row">
+        <div class="bed-chip total"><div class="n" id="bedTotal">—</div><div class="l">মোট শয্যা</div></div>
+        <div class="bed-chip gen"><div class="n" id="bedGen">—</div><div class="l">সাধারণ</div></div>
+        <div class="bed-chip icu"><div class="n" id="bedIcu">—</div><div class="l">আইসিইউ</div></div>
+      </div>
+      <div class="contact-line"><b>ফোন</b><span id="hospPhone">—</span></div>
+      <div class="contact-line"><b>ওয়েবসাইট</b><a id="hospWeb" href="#" target="_blank" rel="noopener">—</a></div>
+      <div class="hosp-details" id="hospDetails">—</div>
+    </div>
+    <div class="panel">
+      <table class="amb-table">
+        <thead>
+          <tr><th>যোগাযোগ ব্যক্তি</th><th>ফোন</th><th>গাড়ির নম্বর</th><th>অবস্থান</th></tr>
+        </thead>
+        <tbody id="ambBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FOOTER STATS -->
+  <div class="section-title"><h2>ড্যাশবোর্ড রিচ</h2><span class="tag">Views over time</span></div>
+  <div class="foot-grid" style="grid-template-columns:1fr;">
+    <div class="panel views-card">
+      <div>
+        <div class="views-num" id="viewsTotal">—</div>
+        <div class="views-lbl">মোট ভিউ (সংগৃহীত সময়কালে)</div>
+      </div>
+      <div class="sparkwrap"><svg id="viewsChart" viewBox="0 0 300 60" preserveAspectRatio="none" style="width:100%;height:100%;display:block;"></svg></div>
+    </div>
+  </div>
+
+  <footer class="page-foot">
+    <span>Source: Heat_stroke_centre_dashboard.xlsx</span>
+    <span id="footRange">—</span>
+  </footer>
+
+</div>
+
+<script>const DASH_DATA = {"hospital": {"name": "ডিএনসিসি ডেডিকেটেড কোভিড-১৯ হাসপাতাল", "address": "শহিদ তাজউদ্দীন আহমদ এভিনিউ, মহাখালী, ঢাকা-১২১২", "lon": 90.4011055621365, "lat": 23.7743438270133, "website": "http://dncc-dch.gov.bd/", "phone": "(+৮৮০) ২৪১০৮২২৭৯, (+৮৮০) ২৪১০৮২২৮০", "details": "ডিএনসিসি ডেডিকেটেড কোভিড-১৯ হাসপাতাল, বাংলাদেশ সশস্ত্র বাহিনী এবং ঢাকা উত্তর সিটি কর্পোরেশন দ্বারা পরিচালিত কোভিড রোগীদের চিকিৎসার জন্য বাংলাদেশের বৃহত্তম বিশেষায়িত হাসপাতাল।", "total_beds": 25, "general_beds": 5, "icu_beds": 20}, "ambulances": [{"contact": "মোঃ ফয়সাল আহমেদ শামীম", "phone": "০১৮৭৩৯৩০৮০৯", "vehicle": "ঢাকা মেট্রো-চ-৭১-৩৪৮৪", "hospital": "ডিএনসিসি ডেডিকেটেড কোভিড-১৯ হাসপাতাল"}, {"contact": "হৃদয় মিয়া ", "phone": "০১৮৭৩১৩০৬৬০", "vehicle": "ঢাকা মেট্রো-চ-৭১-৩৪৮৫", "hospital": "ডিএনসিসি ডেডিকেটেড কোভিড-১৯ হাসপাতাল"}, {"contact": "মোঃ আঃ গনি ", "phone": "০১৭১৬২৭৭৩২৭", "vehicle": "ঢাকা মেট্রো-চ-৭১-৩৪৮৭", "hospital": "নারী মৈত্রী, পিএ-২, মোহাম্মদপুর  "}, {"contact": "মোঃ বাবুল ", "phone": "০১৭৫৯৯৯৯৪৭৬", "vehicle": null, "hospital": "বাপসা, পি এ-৪, মিরপুর সাড়ে এগার, পল্লবী "}, {"contact": "মোঃ আলম ", "phone": "০১৩১৮৮৭৯৯৯৭", "vehicle": null, "hospital": "ঢাকা আহসানিয়া মিশন, মিরপুর-১"}], "weather": [{"date": "2025-05-18", "hi": 33.5, "lo": 24.1, "avg": 28.8, "current": null, "rain": 4.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-05-19", "hi": 34.2, "lo": 27.0, "avg": 30.6, "current": null, "rain": 1.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-05-20", "hi": 34.4, "lo": 26.5, "avg": 30.4, "current": null, "rain": 26.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-05-21", "hi": 35.0, "lo": 24.5, "avg": 29.8, "current": null, "rain": 32.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-05-22", "hi": 32.0, "lo": 24.0, "avg": 28.0, "current": null, "rain": 22.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-05-23", "hi": 32.0, "lo": 24.2, "avg": 28.1, "current": null, "rain": 3.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-05-24", "hi": 33.5, "lo": 26.8, "avg": 30.1, "current": null, "rain": 1.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-05-25", "hi": 33.5, "lo": 27.9, "avg": 30.7, "current": null, "rain": 0.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-05-26", "hi": 34.4, "lo": 27.0, "avg": 30.7, "current": null, "rain": 6.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-05-27", "hi": 35.6, "lo": 25.3, "avg": 30.5, "current": null, "rain": 2.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-05-28", "hi": 34.3, "lo": 28.0, "avg": 31.1, "current": null, "rain": 12.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-05-29", "hi": 26.2, "lo": 25.6, "avg": 25.9, "current": null, "rain": 83.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-05-30", "hi": 28.1, "lo": 25.5, "avg": 26.8, "current": null, "rain": 127.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-05-31", "hi": 34.2, "lo": 26.2, "avg": 30.2, "current": null, "rain": 31.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-01", "hi": 32.1, "lo": 26.0, "avg": 29.1, "current": null, "rain": 3.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-02", "hi": 31.2, "lo": 26.0, "avg": 28.6, "current": null, "rain": 15.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-03", "hi": 32.9, "lo": 24.2, "avg": 28.5, "current": null, "rain": 10.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-04", "hi": 30.4, "lo": 24.0, "avg": 27.2, "current": null, "rain": 6.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-05", "hi": 31.0, "lo": 26.5, "avg": 28.8, "current": null, "rain": 1.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-06", "hi": 34.5, "lo": 25.7, "avg": 30.1, "current": null, "rain": 6.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-07", "hi": 33.7, "lo": 26.0, "avg": 29.9, "current": null, "rain": 27.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-08", "hi": 35.7, "lo": 24.0, "avg": 29.9, "current": null, "rain": 27.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-09", "hi": 34.5, "lo": 27.2, "avg": 30.9, "current": null, "rain": 6.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-10", "hi": 36.8, "lo": 28.4, "avg": 32.6, "current": 34.2, "rain": 6.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-11", "hi": 35.6, "lo": 25.2, "avg": 30.4, "current": 35.6, "rain": 28.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-12", "hi": 35.2, "lo": 27.4, "avg": 31.3, "current": null, "rain": 0.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-13", "hi": 36.0, "lo": 28.8, "avg": 32.4, "current": 34.2, "rain": 0.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-14", "hi": 33.4, "lo": 29.2, "avg": 31.3, "current": 31.2, "rain": 5.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-15", "hi": 34.0, "lo": 28.2, "avg": 31.1, "current": 33.0, "rain": 5.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-16", "hi": 34.2, "lo": 28.0, "avg": 31.1, "current": 31.0, "rain": 2.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-17", "hi": 30.0, "lo": 26.3, "avg": 28.1, "current": 29.0, "rain": 38.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-18", "hi": 30.5, "lo": 26.4, "avg": 28.4, "current": 28.7, "rain": 13.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-19", "hi": 30.5, "lo": 26.8, "avg": 28.6, "current": 30.0, "rain": 10.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-20", "hi": 31.6, "lo": 27.8, "avg": 29.7, "current": 31.6, "rain": 1.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-21", "hi": 34.5, "lo": 27.8, "avg": 31.1, "current": 32.8, "rain": 0.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-22", "hi": 34.2, "lo": 27.8, "avg": 31.0, "current": 32.5, "rain": 0.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-23", "hi": 34.0, "lo": 27.6, "avg": 30.8, "current": 32.0, "rain": 0.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-24", "hi": 35.1, "lo": 28.2, "avg": 31.6, "current": 31.0, "rain": 0.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-25", "hi": 34.4, "lo": 28.2, "avg": 31.3, "current": 33.0, "rain": 0.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-26", "hi": 33.3, "lo": 28.0, "avg": 30.6, "current": 29.0, "rain": 4.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-27", "hi": 33.0, "lo": 27.4, "avg": 30.2, "current": null, "rain": 0.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-28", "hi": 32.5, "lo": 28.0, "avg": 30.2, "current": null, "rain": 0.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-29", "hi": 33.7, "lo": 27.5, "avg": 30.6, "current": 31.0, "rain": 0.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-06-30", "hi": 33.0, "lo": 28.0, "avg": 30.5, "current": 30.8, "rain": 0.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-01", "hi": 33.1, "lo": 27.8, "avg": 30.5, "current": null, "rain": 8.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-02", "hi": 32.4, "lo": 27.1, "avg": 29.8, "current": 28.7, "rain": 7.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-03", "hi": 32.5, "lo": 26.6, "avg": 29.6, "current": 30.0, "rain": 2.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-04", "hi": 32.9, "lo": 25.6, "avg": 29.2, "current": null, "rain": 28.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-05", "hi": 33.0, "lo": 26.0, "avg": 29.5, "current": null, "rain": 18.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-06", "hi": 31.6, "lo": 27.0, "avg": 29.3, "current": 28.0, "rain": 0.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-07", "hi": 29.0, "lo": 26.7, "avg": 27.9, "current": 28.6, "rain": 1.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-08", "hi": 29.0, "lo": 25.3, "avg": 27.1, "current": 27.0, "rain": 24.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-09", "hi": 26.9, "lo": 24.9, "avg": 25.9, "current": null, "rain": 80.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-10", "hi": 29.8, "lo": 25.4, "avg": 27.6, "current": 26.0, "rain": 38.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-11", "hi": 33.2, "lo": 25.0, "avg": 29.1, "current": null, "rain": 16.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-12", "hi": 35.9, "lo": 26.8, "avg": 31.4, "current": null, "rain": 2.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-13", "hi": 35.0, "lo": 26.1, "avg": 30.6, "current": 34.0, "rain": 16.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-14", "hi": 29.0, "lo": 26.6, "avg": 27.8, "current": 27.6, "rain": 17.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-15", "hi": 31.8, "lo": 26.0, "avg": 28.9, "current": 30.2, "rain": 41.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-16", "hi": 33.3, "lo": 25.0, "avg": 29.1, "current": 31.8, "rain": 14.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-17", "hi": 33.3, "lo": 25.0, "avg": 29.1, "current": 27.6, "rain": 0.0, "hum": null, "heatwave": false, "time": "13:53"}, {"date": "2025-07-18", "hi": 34.2, "lo": 27.3, "avg": 30.8, "current": 29.6, "rain": 0.0, "hum": 79.2, "heatwave": false, "time": "21:00"}, {"date": "2025-07-19", "hi": 34.8, "lo": 28.1, "avg": 31.4, "current": 30.8, "rain": 0.0, "hum": 75.4, "heatwave": false, "time": "21:00"}, {"date": "2025-07-20", "hi": 31.8, "lo": 28.8, "avg": 30.3, "current": 29.1, "rain": 1.0, "hum": 80.9, "heatwave": false, "time": "21:00"}, {"date": "2025-07-21", "hi": 35.0, "lo": 28.3, "avg": 31.6, "current": 30.4, "rain": 1.0, "hum": 77.0, "heatwave": false, "time": "21:00"}, {"date": "2025-07-22", "hi": 34.0, "lo": 27.0, "avg": 30.5, "current": 29.7, "rain": 24.0, "hum": 82.8, "heatwave": false, "time": "21:00"}, {"date": "2025-07-23", "hi": 35.8, "lo": 28.4, "avg": 32.1, "current": 31.7, "rain": 0.0, "hum": 76.6, "heatwave": false, "time": "21:00"}, {"date": "2025-07-24", "hi": 31.8, "lo": 24.8, "avg": 28.3, "current": 29.8, "rain": 3.0, "hum": 83.6, "heatwave": false, "time": "21:00"}, {"date": "2025-07-25", "hi": 33.5, "lo": 26.0, "avg": 29.8, "current": 28.2, "rain": 10.0, "hum": 77.6, "heatwave": false, "time": "21:00"}, {"date": "2025-07-26", "hi": 32.2, "lo": 27.0, "avg": 29.6, "current": 29.8, "rain": 3.0, "hum": 81.1, "heatwave": false, "time": "21:00"}, {"date": "2025-07-27", "hi": 34.8, "lo": 27.5, "avg": 31.1, "current": 27.9, "rain": 18.0, "hum": 81.2, "heatwave": false, "time": "21:00"}, {"date": "2025-07-28", "hi": 28.8, "lo": 26.0, "avg": 27.4, "current": 28.0, "rain": 13.0, "hum": 91.5, "heatwave": false, "time": "21:00"}, {"date": "2025-07-29", "hi": 31.5, "lo": 26.7, "avg": 29.1, "current": 27.9, "rain": 11.0, "hum": 84.6, "heatwave": false, "time": "21:00"}, {"date": "2025-07-30", "hi": 32.2, "lo": 26.6, "avg": 29.4, "current": 29.3, "rain": 0.0, "hum": 80.2, "heatwave": false, "time": "21:00"}, {"date": "2025-07-31", "hi": 30.5, "lo": 26.8, "avg": 28.6, "current": 27.6, "rain": 21.0, "hum": 87.9, "heatwave": false, "time": "21:00"}, {"date": "2025-08-01", "hi": 28.0, "lo": 27.2, "avg": 27.6, "current": 27.2, "rain": 2.0, "hum": 93.2, "heatwave": false, "time": "21:00"}, {"date": "2025-08-02", "hi": 32.8, "lo": 27.6, "avg": 30.2, "current": 29.4, "rain": 2.0, "hum": 83.0, "heatwave": false, "time": "21:00"}, {"date": "2025-08-03", "hi": 32.6, "lo": 28.2, "avg": 30.4, "current": 28.8, "rain": 4.0, "hum": 81.0, "heatwave": false, "time": "21:00"}, {"date": "2025-08-04", "hi": 30.4, "lo": 25.2, "avg": 27.8, "current": 27.8, "rain": 12.0, "hum": 90.4, "heatwave": false, "time": "21:00"}, {"date": "2025-08-05", "hi": 31.8, "lo": 24.6, "avg": 28.2, "current": 26.8, "rain": 3.0, "hum": 89.6, "heatwave": false, "time": "21:00"}, {"date": "2025-08-06", "hi": 32.0, "lo": 26.8, "avg": 29.4, "current": 29.1, "rain": 0.0, "hum": 82.2, "heatwave": false, "time": "21:00"}, {"date": "2025-08-07", "hi": 31.1, "lo": 27.2, "avg": 29.1, "current": 28.2, "rain": 0.0, "hum": 81.1, "heatwave": false, "time": "21:00"}, {"date": "2025-08-08", "hi": 28.2, "lo": 26.6, "avg": 27.4, "current": 26.7, "rain": 10.0, "hum": 87.2, "heatwave": false, "time": "21:00"}, {"date": "2025-08-09", "hi": 33.0, "lo": 26.1, "avg": 29.6, "current": 28.6, "rain": 40.0, "hum": 84.9, "heatwave": false, "time": "21:00"}, {"date": "2025-08-10", "hi": 33.6, "lo": 27.3, "avg": 30.5, "current": 29.4, "rain": 1.0, "hum": 74.2, "heatwave": false, "time": "21:00"}, {"date": "2025-08-11", "hi": 34.9, "lo": 27.8, "avg": 31.4, "current": 30.4, "rain": 0.0, "hum": 70.5, "heatwave": false, "time": "21:00"}, {"date": "2025-08-12", "hi": 33.3, "lo": 28.7, "avg": 31.0, "current": 30.8, "rain": 0.0, "hum": 71.8, "heatwave": false, "time": "21:00"}, {"date": "2025-08-13", "hi": 29.8, "lo": 27.0, "avg": 28.4, "current": 27.6, "rain": 4.0, "hum": 85.0, "heatwave": false, "time": "21:00"}, {"date": "2025-08-14", "hi": 30.5, "lo": 26.4, "avg": 28.4, "current": 28.7, "rain": 15.0, "hum": 86.1, "heatwave": false, "time": "21:00"}, {"date": "2025-08-15", "hi": 34.1, "lo": 27.3, "avg": 30.7, "current": 29.7, "rain": 1.0, "hum": 74.8, "heatwave": false, "time": "21:00"}, {"date": "2025-08-16", "hi": 33.4, "lo": 27.0, "avg": 30.2, "current": 30.0, "rain": 1.0, "hum": 78.2, "heatwave": false, "time": "21:00"}, {"date": "2025-08-17", "hi": 33.4, "lo": 25.0, "avg": 29.2, "current": 29.8, "rain": 53.0, "hum": 83.2, "heatwave": false, "time": "21:00"}, {"date": "2025-08-18", "hi": 35.0, "lo": 27.5, "avg": 31.2, "current": 29.5, "rain": 0.0, "hum": 70.1, "heatwave": false, "time": "21:00"}, {"date": "2025-08-19", "hi": 31.2, "lo": 26.0, "avg": 28.6, "current": 28.4, "rain": 11.0, "hum": 79.1, "heatwave": false, "time": "21:00"}, {"date": "2025-08-20", "hi": 30.6, "lo": 26.6, "avg": 28.6, "current": 26.6, "rain": 5.0, "hum": 79.8, "heatwave": false, "time": "21:00"}, {"date": "2025-08-21", "hi": 31.5, "lo": 26.8, "avg": 29.1, "current": 27.1, "rain": 5.0, "hum": 82.6, "heatwave": false, "time": "21:00"}, {"date": "2025-08-22", "hi": 30.7, "lo": 25.8, "avg": 28.2, "current": 28.0, "rain": 10.0, "hum": 86.6, "heatwave": false, "time": "21:00"}, {"date": "2025-08-23", "hi": 28.8, "lo": 26.8, "avg": 27.8, "current": 28.0, "rain": 4.0, "hum": 85.4, "heatwave": false, "time": "21:00"}, {"date": "2025-08-24", "hi": 31.8, "lo": 26.6, "avg": 29.2, "current": 28.4, "rain": 3.0, "hum": 79.8, "heatwave": false, "time": "21:00"}, {"date": "2025-08-25", "hi": 33.4, "lo": 26.1, "avg": 29.8, "current": 30.0, "rain": 0.0, "hum": 72.2, "heatwave": false, "time": "21:00"}, {"date": "2025-08-26", "hi": 33.4, "lo": 27.6, "avg": 30.5, "current": 30.2, "rain": 1.0, "hum": 77.1, "heatwave": false, "time": "21:00"}, {"date": "2025-08-27", "hi": 34.6, "lo": 28.0, "avg": 31.3, "current": 29.4, "rain": 0.0, "hum": 69.2, "heatwave": false, "time": "21:00"}, {"date": "2025-08-28", "hi": 31.8, "lo": 27.9, "avg": 29.9, "current": 29.6, "rain": 2.0, "hum": 77.1, "heatwave": false, "time": "18:00"}, {"date": "2025-08-29", "hi": 32.8, "lo": 28.5, "avg": 30.6, "current": 28.5, "rain": 2.0, "hum": 73.7, "heatwave": false, "time": "21:00"}, {"date": "2025-08-30", "hi": 29.7, "lo": 27.5, "avg": 28.6, "current": 27.6, "rain": 16.0, "hum": 87.9, "heatwave": false, "time": "21:00"}, {"date": "2025-08-31", "hi": 29.4, "lo": 26.6, "avg": 28.0, "current": 27.3, "rain": 30.0, "hum": 90.6, "heatwave": false, "time": "21:00"}, {"date": "2025-09-01", "hi": 36.2, "lo": 26.4, "avg": 31.3, "current": 31.0, "rain": 0.0, "hum": 73.8, "heatwave": false, "time": "21:00"}, {"date": "2025-09-02", "hi": 34.9, "lo": 28.2, "avg": 31.5, "current": 30.0, "rain": 2.0, "hum": 67.4, "heatwave": false, "time": "21:00"}, {"date": "2025-09-03", "hi": 34.2, "lo": 28.0, "avg": 31.1, "current": 30.2, "rain": 0.0, "hum": 67.2, "heatwave": false, "time": "21:00"}, {"date": "2025-09-04", "hi": 33.5, "lo": 26.2, "avg": 29.9, "current": 29.8, "rain": 15.0, "hum": 75.8, "heatwave": false, "time": "21:00"}, {"date": "2025-09-05", "hi": 35.0, "lo": 27.6, "avg": 31.3, "current": 30.7, "rain": 4.0, "hum": 68.0, "heatwave": false, "time": "21:00"}, {"date": "2025-09-06", "hi": 35.2, "lo": 28.5, "avg": 31.9, "current": 31.8, "rain": 0.0, "hum": 69.1, "heatwave": false, "time": "21:00"}, {"date": "2025-09-07", "hi": 33.0, "lo": 29.0, "avg": 31.0, "current": 29.4, "rain": 0.0, "hum": 74.2, "heatwave": false, "time": "21:00"}, {"date": "2025-09-08", "hi": 33.6, "lo": 28.4, "avg": 31.0, "current": 28.4, "rain": 30.0, "hum": 82.6, "heatwave": false, "time": "21:00"}, {"date": "2025-09-09", "hi": 33.4, "lo": 27.9, "avg": 30.6, "current": 29.2, "rain": 0.0, "hum": 81.8, "heatwave": false, "time": "21:00"}, {"date": "2025-09-10", "hi": 35.0, "lo": 28.4, "avg": 31.7, "current": 30.6, "rain": 1.0, "hum": 73.9, "heatwave": false, "time": "21:00"}, {"date": "2025-09-11", "hi": 32.0, "lo": 27.2, "avg": 29.6, "current": 27.9, "rain": 21.0, "hum": 84.9, "heatwave": false, "time": "21:00"}, {"date": "2025-09-12", "hi": 30.2, "lo": 27.8, "avg": 29.0, "current": 28.1, "rain": 4.0, "hum": 88.5, "heatwave": false, "time": "21:00"}, {"date": "2025-09-13", "hi": 32.4, "lo": 27.1, "avg": 29.8, "current": 28.8, "rain": 0.0, "hum": 82.2, "heatwave": false, "time": "21:00"}, {"date": "2025-09-14", "hi": 28.2, "lo": 25.7, "avg": 26.9, "current": 26.0, "rain": 33.0, "hum": 92.4, "heatwave": false, "time": "21:00"}, {"date": "2025-09-15", "hi": 31.8, "lo": 25.6, "avg": 28.7, "current": 25.6, "rain": 2.0, "hum": 87.9, "heatwave": false, "time": "21:00"}, {"date": "2025-09-16", "hi": 28.6, "lo": 26.0, "avg": 27.3, "current": null, "rain": 7.0, "hum": 88.7, "heatwave": false, "time": "21:00"}, {"date": "2025-09-17", "hi": 32.6, "lo": 26.4, "avg": 29.5, "current": 28.5, "rain": 1.0, "hum": 79.0, "heatwave": false, "time": "21:00"}, {"date": "2025-09-18", "hi": 31.5, "lo": 26.8, "avg": 29.1, "current": 28.3, "rain": 3.0, "hum": 83.9, "heatwave": false, "time": "21:00"}, {"date": "2025-09-19", "hi": 32.8, "lo": 27.5, "avg": 30.1, "current": 29.6, "rain": 0.0, "hum": 80.0, "heatwave": false, "time": "21:00"}, {"date": "2025-09-20", "hi": 32.8, "lo": 28.6, "avg": 30.7, "current": 29.0, "rain": 0.0, "hum": 80.6, "heatwave": false, "time": "21:00"}, {"date": "2025-09-21", "hi": 33.6, "lo": 27.6, "avg": 30.6, "current": 29.2, "rain": 10.0, "hum": 81.9, "heatwave": false, "time": "21:00"}, {"date": "2025-09-22", "hi": 30.1, "lo": 25.2, "avg": 27.6, "current": 27.3, "rain": 96.0, "hum": 89.0, "heatwave": false, "time": "21:00"}, {"date": "2025-09-23", "hi": 33.4, "lo": 26.4, "avg": 29.9, "current": 28.8, "rain": 0.0, "hum": 76.9, "heatwave": false, "time": "21:00"}, {"date": "2025-09-24", "hi": 33.8, "lo": 27.2, "avg": 30.5, "current": 27.2, "rain": 9.0, "hum": 79.4, "heatwave": false, "time": "21:00"}, {"date": "2025-09-25", "hi": 37.4, "lo": 26.8, "avg": 32.1, "current": 29.7, "rain": 8.0, "hum": 83.9, "heatwave": false, "time": "21:00"}, {"date": "2025-09-26", "hi": 34.1, "lo": 26.5, "avg": 30.3, "current": 29.6, "rain": 0.0, "hum": 76.2, "heatwave": false, "time": "21:00"}, {"date": "2025-09-27", "hi": 34.0, "lo": 28.2, "avg": 31.1, "current": 28.2, "rain": 6.0, "hum": 79.4, "heatwave": false, "time": "21:00"}, {"date": "2025-09-28", "hi": 32.0, "lo": 27.8, "avg": 29.9, "current": 28.2, "rain": 1.0, "hum": 80.6, "heatwave": false, "time": "21:00"}, {"date": "2025-09-29", "hi": 32.2, "lo": 27.6, "avg": 29.9, "current": 28.9, "rain": 0.0, "hum": 81.2, "heatwave": false, "time": "21:00"}, {"date": "2025-09-30", "hi": 35.0, "lo": 25.8, "avg": 30.4, "current": 27.0, "rain": 75.0, "hum": 79.9, "heatwave": false, "time": "21:00"}, {"date": "2025-10-01", "hi": 30.0, "lo": 24.4, "avg": 27.2, "current": 27.8, "rain": 67.0, "hum": 90.0, "heatwave": false, "time": "21:00"}, {"date": "2025-10-02", "hi": 27.8, "lo": 24.6, "avg": 26.2, "current": 26.5, "rain": 0.0, "hum": 89.1, "heatwave": false, "time": "21:00"}, {"date": "2025-10-03", "hi": 30.8, "lo": 25.5, "avg": 28.1, "current": 27.2, "rain": 25.0, "hum": 91.1, "heatwave": false, "time": "21:00"}, {"date": "2025-10-04", "hi": 32.4, "lo": 26.4, "avg": 29.4, "current": 28.6, "rain": 1.0, "hum": 83.0, "heatwave": false, "time": "21:00"}, {"date": "2025-10-05", "hi": 32.0, "lo": 24.8, "avg": 28.4, "current": 24.8, "rain": 6.0, "hum": 79.4, "heatwave": false, "time": "21:00"}, {"date": "2025-10-06", "hi": 31.3, "lo": 25.1, "avg": 28.2, "current": 27.9, "rain": 0.0, "hum": 85.4, "heatwave": false, "time": "21:00"}, {"date": "2025-10-07", "hi": 28.9, "lo": 26.0, "avg": 27.4, "current": 26.6, "rain": 31.0, "hum": 88.6, "heatwave": false, "time": "21:00"}, {"date": "2025-10-08", "hi": 30.4, "lo": 25.3, "avg": 27.9, "current": 27.4, "rain": 24.0, "hum": 84.9, "heatwave": false, "time": "21:00"}, {"date": "2025-10-09", "hi": 29.2, "lo": 25.4, "avg": 27.3, "current": 27.0, "rain": 47.0, "hum": 92.2, "heatwave": false, "time": "21:00"}, {"date": "2025-10-10", "hi": 29.8, "lo": 25.2, "avg": 27.5, "current": 25.2, "rain": 13.0, "hum": 90.0, "heatwave": false, "time": "21:00"}, {"date": "2025-10-11", "hi": 27.6, "lo": 25.0, "avg": 26.3, "current": 25.4, "rain": 1.0, "hum": 90.9, "heatwave": false, "time": "21:00"}, {"date": "2025-10-12", "hi": 31.8, "lo": 24.8, "avg": 28.3, "current": 26.4, "rain": 0.0, "hum": 77.2, "heatwave": false, "time": "21:00"}, {"date": "2025-10-13", "hi": 32.8, "lo": 24.4, "avg": 28.6, "current": 28.4, "rain": 0.0, "hum": 75.1, "heatwave": false, "time": "21:00"}, {"date": "2025-10-14", "hi": 33.0, "lo": 25.2, "avg": 29.1, "current": 28.3, "rain": 0.0, "hum": 69.6, "heatwave": false, "time": "21:00"}, {"date": "2025-10-15", "hi": 33.6, "lo": 25.7, "avg": 29.6, "current": 28.5, "rain": 0.0, "hum": 70.1, "heatwave": false, "time": "21:00"}, {"date": "2025-10-16", "hi": 33.6, "lo": 26.1, "avg": 29.9, "current": 28.7, "rain": 0.0, "hum": 69.8, "heatwave": false, "time": "21:00"}, {"date": "2025-10-17", "hi": 34.4, "lo": 26.5, "avg": 30.4, "current": 27.6, "rain": 1.0, "hum": 75.0, "heatwave": false, "time": "21:00"}, {"date": "2025-10-18", "hi": 35.1, "lo": 26.1, "avg": 30.6, "current": 28.1, "rain": 0.0, "hum": 74.5, "heatwave": false, "time": "21:00"}, {"date": "2025-10-19", "hi": 35.0, "lo": 25.8, "avg": 30.4, "current": 29.1, "rain": 0.0, "hum": 67.9, "heatwave": false, "time": "21:00"}, {"date": "2025-10-20", "hi": 34.2, "lo": 26.1, "avg": 30.2, "current": 29.3, "rain": 0.0, "hum": 66.5, "heatwave": false, "time": "21:00"}, {"date": "2025-10-21", "hi": 35.2, "lo": 26.4, "avg": 30.8, "current": 29.4, "rain": 0.0, "hum": 63.4, "heatwave": false, "time": "21:00"}, {"date": "2025-10-22", "hi": 34.1, "lo": 27.1, "avg": 30.6, "current": 29.7, "rain": 0.0, "hum": 66.5, "heatwave": false, "time": "21:00"}, {"date": "2025-10-23", "hi": 34.0, "lo": 25.9, "avg": 29.9, "current": 28.0, "rain": 0.0, "hum": 67.9, "heatwave": false, "time": "21:00"}, {"date": "2025-10-24", "hi": 34.2, "lo": 25.1, "avg": 29.7, "current": 27.8, "rain": 0.0, "hum": 63.9, "heatwave": false, "time": "21:00"}, {"date": "2025-10-25", "hi": 33.6, "lo": 25.0, "avg": 29.3, "current": 27.4, "rain": 0.0, "hum": 67.0, "heatwave": false, "time": "21:00"}, {"date": "2025-10-26", "hi": 33.1, "lo": 25.2, "avg": 29.1, "current": 28.0, "rain": 0.0, "hum": 68.5, "heatwave": false, "time": "21:00"}, {"date": "2025-10-27", "hi": 34.1, "lo": 25.8, "avg": 30.0, "current": 29.0, "rain": 0.0, "hum": 67.9, "heatwave": false, "time": "21:00"}, {"date": "2025-10-28", "hi": 34.2, "lo": 25.8, "avg": 30.0, "current": 28.3, "rain": 0.0, "hum": 75.5, "heatwave": false, "time": "21:00"}, {"date": "2025-10-29", "hi": 32.7, "lo": 25.7, "avg": 29.2, "current": 26.7, "rain": 1.0, "hum": 77.0, "heatwave": false, "time": "21:00"}, {"date": "2025-10-30", "hi": 32.5, "lo": 24.3, "avg": 28.4, "current": 27.6, "rain": 19.0, "hum": 80.2, "heatwave": false, "time": "21:00"}, {"date": "2025-10-31", "hi": 34.1, "lo": 25.8, "avg": 30.0, "current": 29.1, "rain": 1.0, "hum": 76.4, "heatwave": false, "time": "21:00"}, {"date": "2025-11-01", "hi": 31.7, "lo": 25.1, "avg": 28.4, "current": 25.1, "rain": 62.0, "hum": 85.8, "heatwave": false, "time": "21:00"}, {"date": "2025-11-02", "hi": 28.3, "lo": 24.6, "avg": 26.5, "current": 26.0, "rain": 0.0, "hum": 82.1, "heatwave": false, "time": "21:00"}, {"date": "2025-11-03", "hi": 30.8, "lo": 24.5, "avg": 27.6, "current": 26.8, "rain": 0.0, "hum": 77.0, "heatwave": false, "time": "21:00"}, {"date": "2025-11-04", "hi": 31.2, "lo": 24.0, "avg": 27.6, "current": 28.0, "rain": 0.0, "hum": 74.2, "heatwave": false, "time": "21:00"}, {"date": "2025-11-05", "hi": 30.8, "lo": 25.8, "avg": 28.3, "current": 27.4, "rain": 0.0, "hum": 77.9, "heatwave": false, "time": "21:00"}, {"date": "2025-11-06", "hi": 32.4, "lo": 25.7, "avg": 29.0, "current": 27.0, "rain": 2.0, "hum": 75.6, "heatwave": false, "time": "21:00"}, {"date": "2025-11-07", "hi": 32.0, "lo": 25.4, "avg": 28.7, "current": 26.6, "rain": 0.0, "hum": 79.5, "heatwave": false, "time": "21:00"}, {"date": "2025-11-08", "hi": 31.2, "lo": 24.6, "avg": 27.9, "current": 25.8, "rain": 0.0, "hum": 71.0, "heatwave": false, "time": "21:00"}, {"date": "2025-11-09", "hi": 30.2, "lo": 22.2, "avg": 26.2, "current": 25.5, "rain": 0.0, "hum": 61.9, "heatwave": false, "time": "21:00"}, {"date": "2025-11-10", "hi": 30.3, "lo": 23.2, "avg": 26.8, "current": 25.1, "rain": 0.0, "hum": 68.4, "heatwave": false, "time": "21:00"}, {"date": "2025-11-11", "hi": 29.2, "lo": 21.7, "avg": 25.4, "current": 24.3, "rain": 0.0, "hum": 52.9, "heatwave": false, "time": "21:00"}, {"date": "2025-11-12", "hi": 29.4, "lo": 20.3, "avg": 24.9, "current": 23.0, "rain": 0.0, "hum": 52.5, "heatwave": false, "time": "21:00"}, {"date": "2025-11-13", "hi": 29.1, "lo": 19.6, "avg": 24.4, "current": 23.0, "rain": 0.0, "hum": 58.1, "heatwave": false, "time": "21:00"}, {"date": "2025-11-14", "hi": 29.2, "lo": 19.6, "avg": 24.4, "current": 21.7, "rain": 0.0, "hum": 65.5, "heatwave": false, "time": "21:00"}, {"date": "2025-11-15", "hi": 29.8, "lo": 19.0, "avg": 24.4, "current": 22.6, "rain": 0.0, "hum": 64.1, "heatwave": false, "time": "21:00"}, {"date": "2025-11-16", "hi": 29.6, "lo": 19.4, "avg": 24.5, "current": 22.2, "rain": 0.0, "hum": 64.9, "heatwave": false, "time": "21:00"}, {"date": "2025-11-17", "hi": 30.3, "lo": 19.0, "avg": 24.6, "current": 22.3, "rain": 0.0, "hum": 60.5, "heatwave": false, "time": "21:00"}, {"date": "2025-11-18", "hi": 31.2, "lo": 19.9, "avg": 25.5, "current": 22.8, "rain": 0.0, "hum": 60.5, "heatwave": false, "time": "21:00"}, {"date": "2025-11-19", "hi": 31.0, "lo": 20.0, "avg": 25.5, "current": 23.0, "rain": 0.0, "hum": 56.2, "heatwave": false, "time": "21:00"}, {"date": "2025-11-20", "hi": 30.3, "lo": 19.8, "avg": 25.1, "current": 22.0, "rain": 0.0, "hum": 59.5, "heatwave": false, "time": "21:00"}, {"date": "2025-11-21", "hi": 29.5, "lo": 19.1, "avg": 24.3, "current": 21.8, "rain": 0.0, "hum": 63.0, "heatwave": false, "time": "21:00"}, {"date": "2025-11-22", "hi": 28.8, "lo": 20.4, "avg": 24.6, "current": 21.5, "rain": 0.0, "hum": 64.0, "heatwave": false, "time": "21:00"}, {"date": "2025-11-23", "hi": 28.5, "lo": 20.6, "avg": 24.6, "current": 21.7, "rain": 0.0, "hum": 64.0, "heatwave": false, "time": "21:00"}, {"date": "2025-11-24", "hi": 28.8, "lo": 19.4, "avg": 24.1, "current": 23.0, "rain": 0.0, "hum": 59.6, "heatwave": false, "time": "21:00"}, {"date": "2025-11-25", "hi": 28.6, "lo": 19.8, "avg": 24.2, "current": 23.0, "rain": 0.0, "hum": 62.8, "heatwave": false, "time": "21:00"}, {"date": "2025-11-26", "hi": 28.3, "lo": 19.0, "avg": 23.6, "current": 21.3, "rain": 0.0, "hum": 63.5, "heatwave": false, "time": "21:00"}, {"date": "2025-11-27", "hi": 29.6, "lo": 17.8, "avg": 23.7, "current": 21.5, "rain": 0.0, "hum": 61.9, "heatwave": false, "time": "21:00"}, {"date": "2025-11-28", "hi": 29.2, "lo": 18.3, "avg": 23.8, "current": 21.8, "rain": 0.0, "hum": 66.1, "heatwave": false, "time": "21:00"}, {"date": "2025-11-29", "hi": 28.8, "lo": 17.6, "avg": 23.2, "current": 20.7, "rain": 0.0, "hum": 64.1, "heatwave": false, "time": "21:00"}, {"date": "2025-11-30", "hi": 28.2, "lo": 18.3, "avg": 23.2, "current": 23.0, "rain": 0.0, "hum": 60.1, "heatwave": false, "time": "21:00"}, {"date": "2025-12-01", "hi": 28.7, "lo": 19.0, "avg": 23.9, "current": 23.6, "rain": 0.0, "hum": 55.5, "heatwave": false, "time": "21:00"}, {"date": "2025-12-02", "hi": 26.6, "lo": 19.6, "avg": 23.1, "current": 23.2, "rain": 0.0, "hum": 53.1, "heatwave": false, "time": "21:00"}, {"date": "2025-12-03", "hi": 27.0, "lo": 19.2, "avg": 23.1, "current": 21.0, "rain": 0.0, "hum": 52.2, "heatwave": false, "time": "21:00"}, {"date": "2025-12-04", "hi": 27.1, "lo": 17.7, "avg": 22.4, "current": 20.8, "rain": 0.0, "hum": 62.2, "heatwave": false, "time": "21:00"}, {"date": "2025-12-05", "hi": 27.8, "lo": 18.2, "avg": 23.0, "current": 21.4, "rain": 0.0, "hum": 66.1, "heatwave": false, "time": "21:00"}, {"date": "2025-12-06", "hi": 27.2, "lo": 18.4, "avg": 22.8, "current": 21.3, "rain": 5.0, "hum": 54.1, "heatwave": false, "time": "21:00"}, {"date": "2025-12-07", "hi": 27.0, "lo": 18.4, "avg": 22.7, "current": 21.6, "rain": 0.0, "hum": 58.8, "heatwave": false, "time": "21:00"}, {"date": "2025-12-08", "hi": 26.8, "lo": 18.4, "avg": 22.6, "current": 21.6, "rain": 0.0, "hum": 59.9, "heatwave": false, "time": "21:00"}, {"date": "2025-12-09", "hi": 26.6, "lo": 17.2, "avg": 21.9, "current": 20.1, "rain": 0.0, "hum": 69.5, "heatwave": false, "time": "21:00"}, {"date": "2025-12-10", "hi": 27.8, "lo": 17.1, "avg": 22.5, "current": 21.2, "rain": 0.0, "hum": 65.2, "heatwave": false, "time": "21:00"}, {"date": "2025-12-11", "hi": 27.2, "lo": 16.3, "avg": 21.8, "current": 21.2, "rain": 0.0, "hum": 60.5, "heatwave": false, "time": "21:00"}, {"date": "2025-12-12", "hi": 27.8, "lo": 16.3, "avg": 22.1, "current": 19.8, "rain": 0.0, "hum": 61.8, "heatwave": false, "time": "21:00"}, {"date": "2025-12-13", "hi": 29.4, "lo": 16.2, "avg": 22.8, "current": 20.3, "rain": 0.0, "hum": 59.9, "heatwave": false, "time": "21:00"}, {"date": "2025-12-14", "hi": 29.1, "lo": 16.6, "avg": 22.9, "current": 20.7, "rain": 0.0, "hum": 60.4, "heatwave": false, "time": "21:00"}, {"date": "2025-12-15", "hi": 28.2, "lo": 17.5, "avg": 22.9, "current": 20.2, "rain": 0.0, "hum": 60.4, "heatwave": false, "time": "21:00"}, {"date": "2025-12-16", "hi": 27.1, "lo": 17.1, "avg": 22.1, "current": 19.8, "rain": 0.0, "hum": 66.2, "heatwave": false, "time": "21:00"}, {"date": "2025-12-17", "hi": 27.5, "lo": 18.3, "avg": 22.9, "current": 21.8, "rain": 0.0, "hum": 65.0, "heatwave": false, "time": "21:00"}, {"date": "2025-12-18", "hi": 28.3, "lo": 17.3, "avg": 22.8, "current": null, "rain": 0.0, "hum": 67.4, "heatwave": false, "time": "21:00"}, {"date": "2025-12-25", "hi": 19.2, "lo": 15.2, "avg": 17.2, "current": 15.2, "rain": 9.0, "hum": 78.7, "heatwave": false, "time": "21:00"}, {"date": "2025-12-26", "hi": 20.0, "lo": 14.2, "avg": 17.1, "current": 15.2, "rain": 0.0, "hum": 83.5, "heatwave": false, "time": "21:00"}, {"date": "2025-12-27", "hi": 22.4, "lo": 13.8, "avg": 18.1, "current": 18.2, "rain": 0.0, "hum": 80.6, "heatwave": false, "time": "21:00"}, {"date": "2025-12-28", "hi": 17.5, "lo": 14.6, "avg": 16.1, "current": 15.7, "rain": 0.0, "hum": 87.5, "heatwave": false, "time": "21:00"}, {"date": "2025-12-29", "hi": 15.4, "lo": 14.0, "avg": 14.7, "current": 14.6, "rain": 0.0, "hum": 90.0, "heatwave": false, "time": "21:00"}, {"date": "2025-12-30", "hi": 18.0, "lo": 14.2, "avg": 16.1, "current": 14.7, "rain": 0.0, "hum": 88.1, "heatwave": false, "time": "21:00"}, {"date": "2025-12-31", "hi": 17.8, "lo": 14.4, "avg": 16.1, "current": null, "rain": 0.0, "hum": 80.6, "heatwave": false, "time": "21:00"}, {"date": "2026-01-01", "hi": 23.2, "lo": 13.5, "avg": 18.4, "current": 16.0, "rain": 0.0, "hum": 81.8, "heatwave": false, "time": "21:00"}, {"date": "2026-01-02", "hi": 20.2, "lo": 13.6, "avg": 16.9, "current": 15.6, "rain": 0.0, "hum": 88.5, "heatwave": false, "time": "21:00"}, {"date": "2026-01-03", "hi": 20.5, "lo": 13.0, "avg": 16.8, "current": 14.7, "rain": 0.0, "hum": 88.8, "heatwave": false, "time": "21:00"}, {"date": "2026-01-04", "hi": 19.2, "lo": 12.5, "avg": 15.8, "current": 15.0, "rain": 0.0, "hum": 86.8, "heatwave": false, "time": "21:00"}, {"date": "2026-01-05", "hi": 18.4, "lo": 13.8, "avg": 16.1, "current": 14.6, "rain": 0.0, "hum": 79.1, "heatwave": false, "time": "21:00"}, {"date": "2026-01-06", "hi": 19.0, "lo": 13.5, "avg": 16.2, "current": 14.7, "rain": 0.0, "hum": 72.6, "heatwave": false, "time": "21:00"}, {"date": "2026-01-07", "hi": 21.0, "lo": 12.4, "avg": 16.7, "current": 16.0, "rain": 0.0, "hum": 79.8, "heatwave": false, "time": "21:00"}, {"date": "2026-01-08", "hi": 24.4, "lo": 13.0, "avg": 18.7, "current": 17.4, "rain": 0.0, "hum": 73.2, "heatwave": false, "time": "21:00"}, {"date": "2026-01-09", "hi": 25.6, "lo": 12.8, "avg": 19.2, "current": 18.2, "rain": 0.0, "hum": 73.5, "heatwave": false, "time": "21:00"}, {"date": "2026-01-10", "hi": 23.7, "lo": 13.4, "avg": 18.6, "current": 18.1, "rain": 0.0, "hum": 70.2, "heatwave": false, "time": "21:00"}, {"date": "2026-01-11", "hi": 24.4, "lo": 15.3, "avg": 19.9, "current": 19.5, "rain": 0.0, "hum": 67.1, "heatwave": false, "time": "21:00"}, {"date": "2026-01-12", "hi": 26.6, "lo": 15.7, "avg": 21.1, "current": 19.8, "rain": 0.0, "hum": 61.8, "heatwave": false, "time": "21:00"}, {"date": "2026-01-13", "hi": 26.6, "lo": 16.4, "avg": 21.5, "current": null, "rain": 0.0, "hum": 64.5, "heatwave": false, "time": "21:00"}, {"date": "2026-01-14", "hi": 25.8, "lo": 16.2, "avg": 21.0, "current": 20.4, "rain": 0.0, "hum": 61.2, "heatwave": false, "time": "21:00"}, {"date": "2026-01-15", "hi": 25.8, "lo": 16.6, "avg": 21.2, "current": 19.6, "rain": 0.0, "hum": 62.0, "heatwave": false, "time": "21:00"}, {"date": "2026-01-16", "hi": 26.0, "lo": 16.2, "avg": 21.1, "current": 20.6, "rain": 0.0, "hum": 60.5, "heatwave": false, "time": "21:00"}, {"date": "2026-01-17", "hi": 26.8, "lo": 17.0, "avg": 21.9, "current": 20.3, "rain": 0.0, "hum": 59.8, "heatwave": false, "time": "21:00"}, {"date": "2026-01-18", "hi": 27.8, "lo": 16.1, "avg": 22.0, "current": 20.4, "rain": 0.0, "hum": 61.1, "heatwave": false, "time": "21:00"}, {"date": "2026-01-19", "hi": 27.5, "lo": 17.4, "avg": 22.4, "current": 21.1, "rain": 0.0, "hum": 60.8, "heatwave": false, "time": "21:00"}, {"date": "2026-01-20", "hi": 26.8, "lo": 17.4, "avg": 22.1, "current": null, "rain": 0.0, "hum": 71.0, "heatwave": false, "time": "21:00"}, {"date": "2026-01-25", "hi": 26.5, "lo": 19.9, "avg": 23.2, "current": 19.9, "rain": 0.0, "hum": 57.3, "heatwave": false, "time": "21:00"}, {"date": "2026-01-26", "hi": 28.0, "lo": 18.3, "avg": 23.1, "current": 21.0, "rain": 0.0, "hum": 60.6, "heatwave": false, "time": "21:00"}, {"date": "2026-01-27", "hi": 27.4, "lo": 17.3, "avg": 22.4, "current": 21.5, "rain": 0.0, "hum": 61.2, "heatwave": false, "time": "21:00"}, {"date": "2026-01-28", "hi": 28.1, "lo": 16.7, "avg": 22.4, "current": 19.1, "rain": 0.0, "hum": 64.6, "heatwave": false, "time": "21:00"}, {"date": "2026-01-29", "hi": 28.2, "lo": 17.2, "avg": 22.7, "current": 22.4, "rain": 0.0, "hum": 67.5, "heatwave": false, "time": "21:00"}, {"date": "2026-01-30", "hi": 27.0, "lo": 18.6, "avg": 22.8, "current": 21.0, "rain": 1.0, "hum": 61.8, "heatwave": false, "time": "21:00"}, {"date": "2026-01-31", "hi": 27.5, "lo": 18.0, "avg": 22.8, "current": 21.2, "rain": 0.0, "hum": 57.1, "heatwave": false, "time": "21:00"}, {"date": "2026-02-01", "hi": 26.4, "lo": 18.2, "avg": 22.3, "current": 21.8, "rain": 0.0, "hum": 64.2, "heatwave": false, "time": "21:00"}, {"date": "2026-02-02", "hi": 28.0, "lo": 18.4, "avg": 23.2, "current": 22.1, "rain": 0.0, "hum": 63.9, "heatwave": false, "time": "21:00"}, {"date": "2026-02-03", "hi": 29.4, "lo": 18.1, "avg": 23.8, "current": 22.6, "rain": 0.0, "hum": 62.0, "heatwave": false, "time": "21:00"}, {"date": "2026-02-04", "hi": 28.1, "lo": 20.0, "avg": 24.1, "current": 21.2, "rain": 0.0, "hum": 60.1, "heatwave": false, "time": "21:00"}, {"date": "2026-02-05", "hi": 28.3, "lo": 18.7, "avg": 23.5, "current": null, "rain": 0.0, "hum": 55.8, "heatwave": false, "time": "21:00"}, {"date": "2026-02-11", "hi": 29.2, "lo": 22.0, "avg": 25.6, "current": 22.0, "rain": 0.0, "hum": 46.0, "heatwave": false, "time": "21:00"}, {"date": "2026-02-12", "hi": 28.6, "lo": 16.4, "avg": 22.5, "current": 21.4, "rain": 0.0, "hum": 57.1, "heatwave": false, "time": "21:00"}, {"date": "2026-02-13", "hi": 28.8, "lo": 18.0, "avg": 23.4, "current": 22.5, "rain": 0.0, "hum": 55.9, "heatwave": false, "time": "21:00"}, {"date": "2026-02-14", "hi": 28.5, "lo": 18.7, "avg": 23.6, "current": null, "rain": 0.0, "hum": 50.4, "heatwave": false, "time": "21:00"}, {"date": "2026-02-15", "hi": 28.6, "lo": 16.5, "avg": 22.6, "current": 20.2, "rain": 0.0, "hum": 52.0, "heatwave": false, "time": "21:00"}, {"date": "2026-02-16", "hi": 23.0, "lo": 17.9, "avg": 20.4, "current": null, "rain": 0.0, "hum": 62.8, "heatwave": false, "time": "21:00"}, {"date": "2026-02-17", "hi": 31.5, "lo": 19.7, "avg": 25.6, "current": 22.0, "rain": 0.0, "hum": 50.5, "heatwave": false, "time": "21:00"}, {"date": "2026-02-18", "hi": 32.4, "lo": 18.1, "avg": 25.2, "current": 23.4, "rain": 0.0, "hum": 52.5, "heatwave": false, "time": "21:00"}, {"date": "2026-02-19", "hi": 32.8, "lo": 18.2, "avg": 25.5, "current": 24.4, "rain": 0.0, "hum": 48.0, "heatwave": false, "time": "21:00"}, {"date": "2026-02-20", "hi": 32.2, "lo": 20.0, "avg": 26.1, "current": 25.6, "rain": 0.0, "hum": 50.2, "heatwave": false, "time": "21:00"}, {"date": "2026-02-21", "hi": 24.5, "lo": 24.5, "avg": 24.5, "current": null, "rain": 0.0, "hum": 56.0, "heatwave": false, "time": "21:00"}, {"date": "2026-02-22", "hi": 31.0, "lo": 20.8, "avg": 25.9, "current": 25.2, "rain": 0.0, "hum": 45.5, "heatwave": false, "time": "21:00"}, {"date": "2026-02-23", "hi": 30.7, "lo": 20.1, "avg": 25.4, "current": 23.1, "rain": 0.0, "hum": 56.0, "heatwave": false, "time": "21:00"}, {"date": "2026-02-24", "hi": 29.0, "lo": 19.9, "avg": 24.4, "current": 24.8, "rain": 0.0, "hum": 57.2, "heatwave": false, "time": "21:00"}, {"date": "2026-02-25", "hi": 30.1, "lo": 19.8, "avg": 25.0, "current": 24.6, "rain": 0.0, "hum": 55.5, "heatwave": false, "time": "21:00"}, {"date": "2026-02-26", "hi": 29.6, "lo": 20.6, "avg": 25.1, "current": 23.8, "rain": 0.0, "hum": 49.5, "heatwave": false, "time": "21:00"}, {"date": "2026-02-27", "hi": 30.9, "lo": 19.6, "avg": 25.2, "current": 23.0, "rain": 0.0, "hum": 48.5, "heatwave": false, "time": "21:00"}, {"date": "2026-02-28", "hi": 32.3, "lo": 18.5, "avg": 25.4, "current": 22.5, "rain": 0.0, "hum": 47.0, "heatwave": false, "time": "21:00"}, {"date": "2026-03-01", "hi": 32.2, "lo": 20.5, "avg": 26.4, "current": 26.8, "rain": 0.0, "hum": 57.9, "heatwave": false, "time": "21:00"}, {"date": "2026-03-02", "hi": 25.2, "lo": 25.2, "avg": 25.2, "current": null, "rain": 0.0, "hum": 75.0, "heatwave": false, "time": "21:00"}, {"date": "2026-03-03", "hi": 31.7, "lo": 22.8, "avg": 27.2, "current": 23.2, "rain": 2.0, "hum": 69.6, "heatwave": false, "time": "21:00"}, {"date": "2026-03-04", "hi": 31.7, "lo": 19.8, "avg": 25.8, "current": 23.4, "rain": 0.0, "hum": 53.9, "heatwave": false, "time": "21:00"}, {"date": "2026-03-05", "hi": 32.9, "lo": 20.3, "avg": 26.6, "current": 24.6, "rain": 0.0, "hum": 50.6, "heatwave": false, "time": "21:00"}, {"date": "2026-03-06", "hi": 33.4, "lo": 21.0, "avg": 27.2, "current": 26.5, "rain": 0.0, "hum": 48.4, "heatwave": false, "time": "21:00"}, {"date": "2026-03-07", "hi": 31.0, "lo": 21.9, "avg": 26.4, "current": 26.2, "rain": 0.0, "hum": 58.5, "heatwave": false, "time": "21:00"}, {"date": "2026-03-08", "hi": 26.2, "lo": 26.2, "avg": 26.2, "current": null, "rain": 0.0, "hum": 60.0, "heatwave": false, "time": "21:00"}, {"date": "2026-03-09", "hi": 31.1, "lo": 24.2, "avg": 27.7, "current": 26.0, "rain": 0.0, "hum": 68.0, "heatwave": false, "time": "21:00"}, {"date": "2026-03-10", "hi": 31.6, "lo": 22.8, "avg": 27.2, "current": 26.6, "rain": 0.0, "hum": 64.4, "heatwave": false, "time": "21:00"}, {"date": "2026-03-11", "hi": 32.4, "lo": 24.0, "avg": 28.2, "current": 28.0, "rain": 0.0, "hum": 67.6, "heatwave": false, "time": "21:00"}, {"date": "2026-03-12", "hi": 31.5, "lo": 24.2, "avg": 27.9, "current": 27.3, "rain": 0.0, "hum": 64.1, "heatwave": false, "time": "21:00"}, {"date": "2026-03-13", "hi": 32.4, "lo": 22.8, "avg": 27.6, "current": 22.8, "rain": 18.0, "hum": 72.9, "heatwave": false, "time": "21:00"}, {"date": "2026-03-14", "hi": 31.8, "lo": 24.8, "avg": 28.3, "current": 27.6, "rain": 0.0, "hum": 71.4, "heatwave": false, "time": "21:00"}, {"date": "2026-03-15", "hi": 31.4, "lo": 25.6, "avg": 28.5, "current": 27.4, "rain": 0.0, "hum": 66.0, "heatwave": false, "time": "21:00"}, {"date": "2026-03-16", "hi": 32.4, "lo": 24.5, "avg": 28.4, "current": 27.6, "rain": 0.0, "hum": 60.8, "heatwave": false, "time": "21:00"}, {"date": "2026-03-17", "hi": 32.2, "lo": 23.2, "avg": 27.7, "current": 28.2, "rain": 1.0, "hum": 56.5, "heatwave": false, "time": "21:00"}, {"date": "2026-03-18", "hi": 32.1, "lo": 19.1, "avg": 25.6, "current": 19.1, "rain": 18.0, "hum": 69.8, "heatwave": false, "time": "21:00"}, {"date": "2026-03-19", "hi": 31.4, "lo": 18.7, "avg": 25.0, "current": 25.2, "rain": 13.0, "hum": 67.8, "heatwave": false, "time": "21:00"}, {"date": "2026-03-20", "hi": 28.0, "lo": 19.8, "avg": 23.9, "current": 22.8, "rain": 15.0, "hum": 78.9, "heatwave": false, "time": "21:00"}, {"date": "2026-03-21", "hi": 25.2, "lo": 20.4, "avg": 22.8, "current": 22.6, "rain": 0.0, "hum": 71.5, "heatwave": false, "time": "21:00"}, {"date": "2026-03-22", "hi": 25.6, "lo": 19.6, "avg": 22.6, "current": 21.8, "rain": 1.0, "hum": 73.2, "heatwave": false, "time": "21:00"}, {"date": "2026-03-23", "hi": 28.6, "lo": 19.6, "avg": 24.1, "current": 23.8, "rain": 0.0, "hum": 68.5, "heatwave": false, "time": "21:00"}, {"date": "2026-03-24", "hi": 31.7, "lo": 21.7, "avg": 26.7, "current": 26.8, "rain": 1.0, "hum": 64.8, "heatwave": false, "time": "21:00"}, {"date": "2026-03-25", "hi": 25.6, "lo": 25.6, "avg": 25.6, "current": null, "rain": 0.0, "hum": 64.0, "heatwave": false, "time": "21:00"}, {"date": "2026-03-26", "hi": 30.0, "lo": 25.8, "avg": 27.9, "current": 25.8, "rain": 0.0, "hum": 70.5, "heatwave": false, "time": "21:00"}, {"date": "2026-03-27", "hi": 32.8, "lo": 21.2, "avg": 27.0, "current": 28.7, "rain": 0.0, "hum": 66.6, "heatwave": false, "time": "21:00"}, {"date": "2026-03-28", "hi": 28.4, "lo": 24.2, "avg": 26.3, "current": 24.2, "rain": 0.0, "hum": 62.1, "heatwave": false, "time": "21:00"}, {"date": "2026-03-29", "hi": 31.4, "lo": 22.4, "avg": 26.9, "current": 26.2, "rain": 1.0, "hum": 70.9, "heatwave": false, "time": "21:00"}, {"date": "2026-03-30", "hi": 32.9, "lo": 25.2, "avg": 29.0, "current": 27.1, "rain": 0.0, "hum": 71.0, "heatwave": false, "time": "21:00"}, {"date": "2026-03-31", "hi": 32.5, "lo": 26.6, "avg": 29.6, "current": 26.6, "rain": 1.0, "hum": 70.0, "heatwave": false, "time": "21:00"}, {"date": "2026-04-01", "hi": 27.7, "lo": 25.6, "avg": 26.6, "current": null, "rain": 0.0, "hum": 80.0, "heatwave": false, "time": "21:00"}, {"date": "2026-04-02", "hi": 34.8, "lo": 30.0, "avg": 32.4, "current": 30.0, "rain": 0.0, "hum": 60.7, "heatwave": false, "time": "21:00"}, {"date": "2026-04-03", "hi": 36.0, "lo": 26.4, "avg": 31.2, "current": 30.6, "rain": 0.0, "hum": 69.0, "heatwave": false, "time": "21:00"}, {"date": "2026-04-04", "hi": 34.8, "lo": 27.0, "avg": 30.9, "current": 30.3, "rain": 0.0, "hum": 69.1, "heatwave": false, "time": "21:00"}, {"date": "2026-04-05", "hi": 31.1, "lo": 26.8, "avg": 29.0, "current": 26.8, "rain": 0.0, "hum": 63.5, "heatwave": false, "time": "21:00"}, {"date": "2026-04-06", "hi": 33.0, "lo": 23.0, "avg": 28.0, "current": 29.4, "rain": 0.0, "hum": 53.7, "heatwave": false, "time": "21:00"}, {"date": "2026-04-07", "hi": 32.9, "lo": 21.4, "avg": 27.1, "current": 21.4, "rain": 5.0, "hum": 57.1, "heatwave": false, "time": "21:00"}, {"date": "2026-04-08", "hi": 30.2, "lo": 20.6, "avg": 25.4, "current": 26.8, "rain": 3.0, "hum": 71.0, "heatwave": false, "time": "21:00"}, {"date": "2026-04-09", "hi": 26.1, "lo": 20.8, "avg": 23.5, "current": 23.0, "rain": 15.0, "hum": 81.5, "heatwave": false, "time": "21:00"}, {"date": "2026-04-10", "hi": 31.4, "lo": 22.4, "avg": 26.9, "current": 24.3, "rain": 1.0, "hum": 71.6, "heatwave": false, "time": "21:00"}, {"date": "2026-04-11", "hi": 34.3, "lo": 22.6, "avg": 28.4, "current": 27.6, "rain": 0.0, "hum": 64.4, "heatwave": false, "time": "21:00"}, {"date": "2026-04-12", "hi": 36.2, "lo": 25.1, "avg": 30.7, "current": null, "rain": 0.0, "hum": 61.6, "heatwave": false, "time": "21:00"}, {"date": "2026-04-13", "hi": 35.0, "lo": 29.6, "avg": 32.3, "current": 29.6, "rain": 0.0, "hum": 56.0, "heatwave": false, "time": "21:00"}, {"date": "2026-04-14", "hi": 33.6, "lo": 25.0, "avg": 29.3, "current": 29.8, "rain": 0.0, "hum": 71.8, "heatwave": false, "time": "21:00"}, {"date": "2026-04-15", "hi": 35.1, "lo": 27.6, "avg": 31.4, "current": 29.7, "rain": 0.0, "hum": 67.6, "heatwave": false, "time": "21:00"}, {"date": "2026-04-16", "hi": 32.4, "lo": 25.2, "avg": 28.8, "current": null, "rain": 1.0, "hum": 74.2, "heatwave": false, "time": "21:00"}, {"date": "2026-04-17", "hi": 35.5, "lo": 29.4, "avg": 32.5, "current": 30.4, "rain": 0.0, "hum": 61.6, "heatwave": false, "time": "21:00"}, {"date": "2026-04-18", "hi": 35.2, "lo": 27.0, "avg": 31.1, "current": 30.6, "rain": 0.0, "hum": 66.8, "heatwave": false, "time": "21:00"}, {"date": "2026-04-19", "hi": 35.2, "lo": 27.2, "avg": 31.2, "current": 30.5, "rain": 0.0, "hum": 64.5, "heatwave": false, "time": "21:00"}, {"date": "2026-04-20", "hi": 35.2, "lo": 28.4, "avg": 31.8, "current": 29.8, "rain": 1.0, "hum": 68.4, "heatwave": false, "time": "21:00"}, {"date": "2026-04-21", "hi": 35.0, "lo": 28.0, "avg": 31.5, "current": 30.0, "rain": 0.0, "hum": 69.0, "heatwave": false, "time": "21:00"}, {"date": "2026-04-22", "hi": 35.9, "lo": 28.2, "avg": 32.0, "current": 30.6, "rain": 0.0, "hum": 67.5, "heatwave": false, "time": "21:00"}, {"date": "2026-04-23", "hi": 36.8, "lo": 27.4, "avg": 32.1, "current": 31.6, "rain": 0.0, "hum": 53.2, "heatwave": false, "time": "21:00"}, {"date": "2026-04-24", "hi": 35.8, "lo": 28.0, "avg": 31.9, "current": 31.2, "rain": 0.0, "hum": 67.8, "heatwave": false, "time": "21:00"}, {"date": "2026-04-25", "hi": 35.4, "lo": 27.8, "avg": 31.6, "current": 30.0, "rain": 0.0, "hum": 65.2, "heatwave": false, "time": "21:00"}, {"date": "2026-04-26", "hi": 32.2, "lo": 22.1, "avg": 27.2, "current": 22.5, "rain": 33.0, "hum": 70.8, "heatwave": false, "time": "21:00"}, {"date": "2026-04-27", "hi": 27.6, "lo": 21.7, "avg": 24.6, "current": 26.2, "rain": 8.0, "hum": 84.4, "heatwave": false, "time": "21:00"}, {"date": "2026-04-28", "hi": 27.2, "lo": 23.4, "avg": 25.3, "current": null, "rain": 1.0, "hum": 83.0, "heatwave": false, "time": "21:00"}, {"date": "2026-05-03", "hi": 31.4, "lo": 25.2, "avg": 28.3, "current": 25.2, "rain": 0.0, "hum": 67.8, "heatwave": false, "time": "21:00"}, {"date": "2026-05-04", "hi": 30.5, "lo": 25.0, "avg": 27.8, "current": 26.5, "rain": 0.0, "hum": 74.1, "heatwave": false, "time": "21:00"}, {"date": "2026-05-05", "hi": 33.0, "lo": 24.2, "avg": 28.6, "current": 25.8, "rain": 2.0, "hum": 74.0, "heatwave": false, "time": "21:00"}, {"date": "2026-05-06", "hi": 32.8, "lo": 22.8, "avg": 27.8, "current": 22.8, "rain": 25.0, "hum": 72.2, "heatwave": false, "time": "21:00"}, {"date": "2026-05-07", "hi": 32.2, "lo": 22.8, "avg": 27.5, "current": 28.0, "rain": 1.0, "hum": 89.0, "heatwave": false, "time": "21:00"}, {"date": "2026-05-08", "hi": 34.9, "lo": 23.4, "avg": 29.1, "current": 29.2, "rain": 0.0, "hum": 43.8, "heatwave": false, "time": "21:00"}, {"date": "2026-05-09", "hi": 34.4, "lo": 25.6, "avg": 30.0, "current": 29.4, "rain": 0.0, "hum": 59.6, "heatwave": false, "time": "21:00"}, {"date": "2026-05-10", "hi": 34.2, "lo": 22.5, "avg": 28.4, "current": 25.2, "rain": 31.0, "hum": 71.9, "heatwave": false, "time": "21:00"}, {"date": "2026-05-11", "hi": 32.9, "lo": 22.8, "avg": 27.9, "current": 25.4, "rain": 12.0, "hum": 75.4, "heatwave": false, "time": "21:00"}, {"date": "2026-05-12", "hi": 34.2, "lo": 24.0, "avg": 29.1, "current": 28.6, "rain": 0.0, "hum": 71.9, "heatwave": false, "time": "21:00"}, {"date": "2026-05-13", "hi": 33.6, "lo": 23.8, "avg": 28.7, "current": 24.2, "rain": 42.0, "hum": 75.2, "heatwave": false, "time": "21:00"}, {"date": "2026-05-14", "hi": 33.2, "lo": 23.6, "avg": 28.4, "current": 28.2, "rain": 0.0, "hum": 76.9, "heatwave": false, "time": "21:00"}, {"date": "2026-05-15", "hi": 34.4, "lo": 26.8, "avg": 30.6, "current": 27.0, "rain": 0.0, "hum": 70.5, "heatwave": false, "time": "21:00"}, {"date": "2026-05-16", "hi": 35.0, "lo": 28.2, "avg": 31.6, "current": 31.2, "rain": 1.0, "hum": 70.0, "heatwave": false, "time": "21:00"}, {"date": "2026-05-17", "hi": 34.2, "lo": 22.1, "avg": 28.2, "current": 30.2, "rain": 27.0, "hum": 77.4, "heatwave": false, "time": "21:00"}, {"date": "2026-05-18", "hi": 31.2, "lo": 25.2, "avg": 28.2, "current": 25.2, "rain": 16.0, "hum": 75.9, "heatwave": false, "time": "21:00"}, {"date": "2026-05-19", "hi": 34.3, "lo": 25.5, "avg": 29.9, "current": 31.6, "rain": 0.0, "hum": 72.9, "heatwave": false, "time": "21:00"}, {"date": "2026-05-20", "hi": 36.2, "lo": 29.1, "avg": 32.7, "current": 31.4, "rain": 0.0, "hum": 72.1, "heatwave": false, "time": "21:00"}, {"date": "2026-05-21", "hi": 33.8, "lo": 29.5, "avg": 31.6, "current": 29.5, "rain": 0.0, "hum": 73.5, "heatwave": false, "time": "21:00"}, {"date": "2026-05-22", "hi": 34.5, "lo": 26.5, "avg": 30.5, "current": 28.3, "rain": 9.0, "hum": 78.6, "heatwave": false, "time": "21:00"}, {"date": "2026-05-23", "hi": 35.0, "lo": 27.9, "avg": 31.4, "current": 31.8, "rain": 0.0, "hum": 74.4, "heatwave": false, "time": "21:00"}, {"date": "2026-05-24", "hi": 35.2, "lo": 24.8, "avg": 30.0, "current": 25.8, "rain": 14.0, "hum": 78.9, "heatwave": false, "time": "21:00"}, {"date": "2026-05-25", "hi": 30.2, "lo": 24.5, "avg": 27.4, "current": 25.5, "rain": 56.0, "hum": 84.9, "heatwave": false, "time": "21:00"}, {"date": "2026-05-26", "hi": 26.5, "lo": 21.5, "avg": 24.0, "current": null, "rain": 0.0, "hum": 88.7, "heatwave": false, "time": "21:00"}, {"date": "2026-05-30", "hi": 34.3, "lo": 29.3, "avg": 31.8, "current": 29.3, "rain": 1.0, "hum": 53.2, "heatwave": false, "time": "21:00"}, {"date": "2026-05-31", "hi": 35.4, "lo": 27.3, "avg": 31.4, "current": 33.6, "rain": 0.0, "hum": 61.8, "heatwave": false, "time": "21:00"}, {"date": "2026-06-01", "hi": 34.8, "lo": 28.5, "avg": 31.6, "current": 31.4, "rain": 0.0, "hum": 67.4, "heatwave": false, "time": "21:00"}, {"date": "2026-06-02", "hi": 35.9, "lo": 29.0, "avg": 32.5, "current": 32.4, "rain": 0.0, "hum": 65.9, "heatwave": false, "time": "21:00"}, {"date": "2026-06-03", "hi": 36.0, "lo": 29.2, "avg": 32.6, "current": 32.2, "rain": 0.0, "hum": 65.0, "heatwave": false, "time": "21:00"}, {"date": "2026-06-04", "hi": 36.5, "lo": 29.4, "avg": 33.0, "current": 30.8, "rain": 0.0, "hum": 69.1, "heatwave": false, "time": "21:00"}, {"date": "2026-06-05", "hi": 32.9, "lo": 27.6, "avg": 30.2, "current": 27.6, "rain": 1.0, "hum": 80.9, "heatwave": false, "time": "21:00"}, {"date": "2026-06-06", "hi": 35.0, "lo": 25.4, "avg": 30.2, "current": 25.4, "rain": 6.0, "hum": 78.4, "heatwave": false, "time": "21:00"}, {"date": "2026-06-07", "hi": 33.6, "lo": 25.4, "avg": 29.5, "current": 28.8, "rain": 0.0, "hum": 78.0, "heatwave": false, "time": "21:00"}, {"date": "2026-06-08", "hi": 34.8, "lo": 28.0, "avg": 31.4, "current": 29.5, "rain": 1.0, "hum": 73.4, "heatwave": false, "time": "21:00"}, {"date": "2026-06-09", "hi": 29.8, "lo": 28.0, "avg": 28.9, "current": null, "rain": 0.0, "hum": 80.8, "heatwave": false, "time": "21:00"}, {"date": "2026-06-11", "hi": 33.8, "lo": 27.0, "avg": 30.4, "current": 27.2, "rain": 5.0, "hum": 73.8, "heatwave": false, "time": "21:00"}, {"date": "2026-06-12", "hi": 34.3, "lo": 25.5, "avg": 29.9, "current": 26.5, "rain": 37.0, "hum": 77.8, "heatwave": false, "time": "21:00"}, {"date": "2026-06-13", "hi": 32.8, "lo": 25.3, "avg": 29.0, "current": 28.0, "rain": 34.0, "hum": 88.9, "heatwave": false, "time": "21:00"}, {"date": "2026-06-14", "hi": 32.1, "lo": 28.1, "avg": 30.1, "current": 30.6, "rain": 0.0, "hum": 76.6, "heatwave": false, "time": "21:00"}, {"date": "2026-06-15", "hi": 33.8, "lo": 27.6, "avg": 30.7, "current": 27.6, "rain": 1.0, "hum": 76.2, "heatwave": false, "time": "21:00"}, {"date": "2026-06-16", "hi": 29.7, "lo": 26.3, "avg": 28.0, "current": 29.3, "rain": 14.0, "hum": 85.8, "heatwave": false, "time": "21:00"}, {"date": "2026-06-17", "hi": 30.5, "lo": 28.0, "avg": 29.2, "current": null, "rain": 0.0, "hum": 85.2, "heatwave": false, "time": "21:00"}, {"date": "2026-06-18", "hi": 33.0, "lo": 24.0, "avg": 28.5, "current": 25.2, "rain": 14.0, "hum": 88.8, "heatwave": false, "time": "21:00"}, {"date": "2026-06-19", "hi": 31.8, "lo": 24.0, "avg": 27.9, "current": 29.4, "rain": 0.0, "hum": 78.0, "heatwave": false, "time": "21:00"}, {"date": "2026-06-20", "hi": 34.2, "lo": 27.6, "avg": 30.9, "current": 29.2, "rain": 3.0, "hum": 72.4, "heatwave": false, "time": "21:00"}, {"date": "2026-06-21", "hi": 34.1, "lo": 25.0, "avg": 29.6, "current": 25.0, "rain": 60.0, "hum": 82.2, "heatwave": false, "time": "21:00"}, {"date": "2026-06-22", "hi": 32.7, "lo": 25.2, "avg": 29.0, "current": 29.4, "rain": 1.0, "hum": 93.0, "heatwave": false, "time": "21:00"}, {"date": "2026-06-23", "hi": 33.5, "lo": 27.0, "avg": 30.2, "current": 29.8, "rain": 0.0, "hum": null, "heatwave": false, "time": "21:00"}, {"date": "2026-06-24", "hi": 32.2, "lo": 28.0, "avg": 30.1, "current": 29.2, "rain": 0.0, "hum": null, "heatwave": false, "time": "21:00"}, {"date": "2026-06-25", "hi": 34.1, "lo": 28.1, "avg": 31.1, "current": 29.1, "rain": 0.0, "hum": 68.8, "heatwave": false, "time": "21:00"}, {"date": "2026-06-26", "hi": 35.0, "lo": 27.8, "avg": 31.4, "current": 30.8, "rain": 1.0, "hum": 69.6, "heatwave": false, "time": "21:00"}, {"date": "2026-06-27", "hi": 35.2, "lo": 28.4, "avg": 31.8, "current": 30.8, "rain": 0.0, "hum": 72.0, "heatwave": false, "time": "21:00"}, {"date": "2026-06-28", "hi": 35.7, "lo": 28.5, "avg": 32.1, "current": 30.2, "rain": 0.0, "hum": 72.6, "heatwave": false, "time": "21:00"}, {"date": "2026-06-29", "hi": 31.6, "lo": 28.8, "avg": 30.2, "current": 29.0, "rain": 0.0, "hum": 78.1, "heatwave": false, "time": "21:00"}, {"date": "2026-06-30", "hi": 32.2, "lo": 28.0, "avg": 30.1, "current": 28.3, "rain": 2.0, "hum": 82.2, "heatwave": false, "time": "21:00"}, {"date": "2026-07-01", "hi": 30.8, "lo": 27.2, "avg": 29.0, "current": 28.0, "rain": 3.0, "hum": 87.0, "heatwave": false, "time": "21:00"}, {"date": "2026-07-02", "hi": 31.4, "lo": 27.9, "avg": 29.6, "current": 29.6, "rain": 0.0, "hum": 84.8, "heatwave": false, "time": "21:00"}, {"date": "2026-07-03", "hi": 34.2, "lo": 28.4, "avg": 31.3, "current": 30.6, "rain": 0.0, "hum": 75.0, "heatwave": false, "time": "21:00"}, {"date": "2026-07-04", "hi": 35.7, "lo": 27.5, "avg": 31.6, "current": 27.5, "rain": 0.0, "hum": 72.8, "heatwave": false, "time": "21:00"}, {"date": "2026-07-05", "hi": 30.5, "lo": 26.7, "avg": 28.6, "current": 27.8, "rain": 1.0, "hum": 81.6, "heatwave": false, "time": "21:00"}, {"date": "2026-07-06", "hi": 30.8, "lo": 17.2, "avg": 24.0, "current": 28.3, "rain": 16.0, "hum": 86.5, "heatwave": false, "time": "21:00"}, {"date": "2026-07-07", "hi": 31.8, "lo": 26.2, "avg": 29.0, "current": 27.0, "rain": 37.0, "hum": 89.5, "heatwave": false, "time": "21:00"}, {"date": "2026-07-08", "hi": 29.0, "lo": 27.0, "avg": 28.0, "current": 27.2, "rain": 8.0, "hum": 95.8, "heatwave": false, "time": "21:00"}, {"date": "2026-07-09", "hi": 28.4, "lo": 25.8, "avg": 27.1, "current": 28.4, "rain": 6.0, "hum": 95.2, "heatwave": false, "time": "12:00"}], "views": [{"date": "2025-05-25", "views": 227}, {"date": "2025-05-26", "views": 245}, {"date": "2025-05-27", "views": 263}, {"date": "2025-05-28", "views": 280}, {"date": "2025-05-29", "views": 302}, {"date": "2025-05-30", "views": 312}, {"date": "2025-05-31", "views": 314}, {"date": "2025-06-01", "views": 327}, {"date": "2025-06-02", "views": 337}, {"date": "2025-06-03", "views": 345}, {"date": "2025-06-04", "views": 355}, {"date": "2025-06-05", "views": 357}, {"date": "2025-06-06", "views": 360}, {"date": "2025-06-07", "views": 362}, {"date": "2025-06-08", "views": 367}, {"date": "2025-06-09", "views": 370}, {"date": "2025-06-10", "views": 370}, {"date": "2025-06-11", "views": 380}, {"date": "2025-06-12", "views": 384}, {"date": "2025-06-13", "views": 391}, {"date": "2025-06-14", "views": 400}, {"date": "2025-06-15", "views": 406}, {"date": "2025-06-16", "views": 415}, {"date": "2025-06-17", "views": 427}, {"date": "2025-06-18", "views": 445}, {"date": "2025-06-19", "views": 455}, {"date": "2025-06-20", "views": 465}, {"date": "2025-06-21", "views": 470}, {"date": "2025-06-22", "views": 477}, {"date": "2025-06-23", "views": 477}, {"date": "2025-06-24", "views": 477}, {"date": "2025-06-25", "views": 516}, {"date": "2025-06-26", "views": 525}, {"date": "2025-06-27", "views": 534}, {"date": "2025-06-28", "views": 543}, {"date": "2025-06-29", "views": 549}, {"date": "2025-06-30", "views": 562}, {"date": "2025-07-01", "views": 575}, {"date": "2025-07-02", "views": 583}, {"date": "2025-07-03", "views": 603}, {"date": "2025-07-04", "views": 609}, {"date": "2025-07-05", "views": 625}, {"date": "2025-07-06", "views": 632}, {"date": "2025-07-07", "views": 641}, {"date": "2025-07-08", "views": 658}, {"date": "2025-07-09", "views": 665}, {"date": "2025-07-10", "views": 673}, {"date": "2025-07-11", "views": 681}, {"date": "2025-07-12", "views": 689}, {"date": "2025-07-13", "views": 697}, {"date": "2025-07-14", "views": 702}, {"date": "2025-07-15", "views": 717}, {"date": "2025-07-16", "views": 723}, {"date": "2025-07-17", "views": 732}, {"date": "2025-07-18", "views": 741}, {"date": "2025-07-19", "views": 750}, {"date": "2025-07-20", "views": 759}, {"date": "2025-07-21", "views": 760}, {"date": "2025-07-22", "views": 765}, {"date": "2025-07-23", "views": 780}, {"date": "2025-07-24", "views": 792}, {"date": "2025-07-25", "views": 803}, {"date": "2025-07-26", "views": 814}, {"date": "2025-07-27", "views": 821}, {"date": "2025-07-28", "views": 831}, {"date": "2025-07-29", "views": 838}, {"date": "2025-07-30", "views": 844}, {"date": "2025-07-31", "views": 850}, {"date": "2025-08-01", "views": 856}, {"date": "2025-08-02", "views": 862}, {"date": "2025-08-03", "views": 878}, {"date": "2025-08-04", "views": 888}, {"date": "2025-08-05", "views": 908}, {"date": "2025-08-06", "views": 918}, {"date": "2025-08-07", "views": 929}, {"date": "2025-08-08", "views": 940}, {"date": "2025-08-09", "views": 951}, {"date": "2025-08-10", "views": 963}, {"date": "2025-08-11", "views": 966}, {"date": "2025-08-12", "views": 985}, {"date": "2025-08-13", "views": 992}, {"date": "2025-08-14", "views": 1003}, {"date": "2025-08-15", "views": 1014}, {"date": "2025-08-16", "views": 1015}, {"date": "2025-08-17", "views": 1017}, {"date": "2025-08-18", "views": 1029}, {"date": "2025-08-19", "views": 1042}, {"date": "2025-08-20", "views": 1048}, {"date": "2025-08-21", "views": 1064}, {"date": "2025-08-22", "views": 1070}, {"date": "2025-08-23", "views": 1075}, {"date": "2025-08-24", "views": 1083}, {"date": "2025-08-25", "views": 1091}, {"date": "2025-08-26", "views": 1099}, {"date": "2025-08-27", "views": 1104}, {"date": "2025-08-28", "views": 1116}, {"date": "2025-08-29", "views": 1127}, {"date": "2025-08-30", "views": 1133}, {"date": "2025-08-31", "views": 1144}, {"date": "2025-09-01", "views": 1153}, {"date": "2025-09-02", "views": 1162}, {"date": "2025-09-03", "views": 1171}, {"date": "2025-09-04", "views": 1172}, {"date": "2025-09-05", "views": 1173}, {"date": "2025-09-06", "views": 1174}, {"date": "2025-09-07", "views": 1175}, {"date": "2025-09-08", "views": 1193}, {"date": "2025-09-09", "views": 1205}, {"date": "2025-09-10", "views": 1215}, {"date": "2025-09-11", "views": 1218}, {"date": "2025-09-12", "views": 1223}, {"date": "2025-09-13", "views": 1225}, {"date": "2025-09-14", "views": 1227}, {"date": "2025-09-15", "views": 1231}, {"date": "2025-09-16", "views": 1234}, {"date": "2025-09-17", "views": 1250}, {"date": "2025-09-18", "views": 1260}, {"date": "2025-09-19", "views": 1275}, {"date": "2025-09-20", "views": 1290}, {"date": "2025-09-21", "views": 1305}, {"date": "2025-09-22", "views": 1310}, {"date": "2025-09-23", "views": 1319}, {"date": "2025-09-24", "views": 1349}, {"date": "2025-09-25", "views": 1356}, {"date": "2025-09-26", "views": 1364}, {"date": "2025-09-27", "views": 1371}, {"date": "2025-09-28", "views": 1395}, {"date": "2025-09-29", "views": 1410}, {"date": "2025-09-30", "views": 1425}, {"date": "2025-10-01", "views": 1433}, {"date": "2025-10-02", "views": 1437}, {"date": "2025-10-03", "views": 1442}, {"date": "2025-10-04", "views": 1453}, {"date": "2025-10-05", "views": 1465}, {"date": "2025-10-06", "views": 1476}, {"date": "2025-10-07", "views": 1490}, {"date": "2025-10-08", "views": 1507}, {"date": "2025-10-09", "views": 1531}, {"date": "2025-10-10", "views": 1539}, {"date": "2025-10-11", "views": 1545}, {"date": "2025-10-12", "views": 1553}, {"date": "2025-10-13", "views": 1571}, {"date": "2025-10-14", "views": 1588}, {"date": "2025-10-15", "views": 1599}, {"date": "2025-10-16", "views": 1613}, {"date": "2025-10-17", "views": 1623}, {"date": "2025-10-18", "views": 1631}, {"date": "2025-10-19", "views": 1641}, {"date": "2025-10-20", "views": 1653}, {"date": "2025-10-21", "views": 1665}, {"date": "2025-10-22", "views": 1679}, {"date": "2025-10-23", "views": 1703}, {"date": "2025-10-24", "views": 1707}, {"date": "2025-10-25", "views": 1724}, {"date": "2025-10-26", "views": 1727}, {"date": "2025-10-27", "views": 1731}, {"date": "2025-10-28", "views": 1742}, {"date": "2025-10-29", "views": 1766}, {"date": "2025-10-30", "views": 1775}, {"date": "2025-10-31", "views": 1780}, {"date": "2025-11-01", "views": 1785}, {"date": "2025-11-02", "views": 1794}, {"date": "2025-11-03", "views": 1798}, {"date": "2025-11-04", "views": 1807}, {"date": "2025-11-05", "views": 1815}, {"date": "2025-11-06", "views": 1831}, {"date": "2025-11-07", "views": 1837}, {"date": "2025-11-08", "views": 1844}, {"date": "2025-11-09", "views": 1850}, {"date": "2025-11-10", "views": 1856}, {"date": "2025-11-11", "views": 1861}, {"date": "2025-11-12", "views": 1871}, {"date": "2025-11-13", "views": 1881}, {"date": "2025-11-14", "views": 1891}, {"date": "2025-11-15", "views": 1902}, {"date": "2025-11-16", "views": 1923}, {"date": "2025-11-17", "views": 1927}, {"date": "2025-11-18", "views": 1934}, {"date": "2025-11-19", "views": 1938}, {"date": "2025-11-20", "views": 1943}, {"date": "2025-11-21", "views": 1951}, {"date": "2025-11-22", "views": 1960}, {"date": "2025-11-23", "views": 1978}, {"date": "2025-11-24", "views": 1991}, {"date": "2025-11-25", "views": 1998}, {"date": "2025-11-26", "views": 2015}, {"date": "2025-11-27", "views": 2024}, {"date": "2025-11-28", "views": 2028}, {"date": "2025-11-29", "views": 2035}, {"date": "2025-11-30", "views": 2042}, {"date": "2025-12-01", "views": 2051}, {"date": "2025-12-02", "views": 2060}, {"date": "2025-12-03", "views": 2080}, {"date": "2025-12-04", "views": 2090}, {"date": "2025-12-05", "views": 2095}, {"date": "2025-12-06", "views": 2098}, {"date": "2025-12-07", "views": 2102}, {"date": "2025-12-08", "views": 2110}, {"date": "2025-12-09", "views": 2114}, {"date": "2025-12-10", "views": 2125}, {"date": "2025-12-11", "views": 2133}, {"date": "2025-12-12", "views": 2139}, {"date": "2025-12-13", "views": 2146}, {"date": "2025-12-14", "views": 2152}, {"date": "2025-12-15", "views": 2156}, {"date": "2025-12-16", "views": 2165}, {"date": "2025-12-17", "views": 2175}, {"date": "2025-12-18", "views": 2190}, {"date": "2025-12-19", "views": 2195}, {"date": "2025-12-20", "views": 2200}, {"date": "2025-12-21", "views": 2205}, {"date": "2025-12-22", "views": 2210}, {"date": "2025-12-23", "views": 2215}, {"date": "2025-12-24", "views": 2220}, {"date": "2025-12-25", "views": 2225}, {"date": "2025-12-26", "views": 2230}, {"date": "2025-12-27", "views": 2235}, {"date": "2025-12-28", "views": 2245}, {"date": "2025-12-29", "views": 2263}, {"date": "2025-12-30", "views": 2267}, {"date": "2025-12-31", "views": 2272}, {"date": "2026-01-01", "views": 2278}, {"date": "2026-01-02", "views": 2287}, {"date": "2026-01-03", "views": 2298}, {"date": "2026-01-04", "views": 2306}, {"date": "2026-01-05", "views": 2313}, {"date": "2026-01-06", "views": 2320}, {"date": "2026-01-07", "views": 2324}, {"date": "2026-01-08", "views": 2331}, {"date": "2026-01-09", "views": 2337}, {"date": "2026-01-10", "views": 2345}, {"date": "2026-01-11", "views": 2355}, {"date": "2026-01-12", "views": 2367}, {"date": "2026-01-13", "views": 2376}, {"date": "2026-01-14", "views": 2386}, {"date": "2026-01-15", "views": 2392}, {"date": "2026-01-16", "views": 2398}, {"date": "2026-01-17", "views": 2404}, {"date": "2026-01-18", "views": 2410}, {"date": "2026-01-19", "views": 2411}, {"date": "2026-01-20", "views": 2415}, {"date": "2026-01-21", "views": 2419}, {"date": "2026-01-22", "views": 2421}, {"date": "2026-01-23", "views": 2427}, {"date": "2026-01-24", "views": 2431}, {"date": "2026-01-25", "views": 2433}, {"date": "2026-01-26", "views": 2435}, {"date": "2026-01-27", "views": 2436}, {"date": "2026-01-28", "views": 2437}, {"date": "2026-01-29", "views": 2440}, {"date": "2026-01-30", "views": 2443}, {"date": "2026-01-31", "views": 2446}, {"date": "2026-02-01", "views": 2449}, {"date": "2026-02-02", "views": 2452}, {"date": "2026-02-03", "views": 2455}, {"date": "2026-02-04", "views": 2458}, {"date": "2026-02-05", "views": 2462}, {"date": "2026-02-06", "views": 2464}, {"date": "2026-02-07", "views": 2466}, {"date": "2026-02-08", "views": 2468}, {"date": "2026-02-09", "views": 2470}, {"date": "2026-02-10", "views": 2472}, {"date": "2026-02-11", "views": 2474}, {"date": "2026-02-12", "views": 2476}, {"date": "2026-02-13", "views": 2478}, {"date": "2026-02-14", "views": 2482}, {"date": "2026-02-15", "views": 2485}, {"date": "2026-02-16", "views": 2488}, {"date": "2026-02-17", "views": 2491}, {"date": "2026-02-18", "views": 2494}, {"date": "2026-02-19", "views": 2497}, {"date": "2026-02-20", "views": 2500}, {"date": "2026-02-21", "views": 2502}, {"date": "2026-02-22", "views": 2506}, {"date": "2026-02-23", "views": 2510}, {"date": "2026-02-24", "views": 2514}, {"date": "2026-02-25", "views": 2518}, {"date": "2026-02-26", "views": 2522}, {"date": "2026-02-27", "views": 2526}, {"date": "2026-02-28", "views": 2530}, {"date": "2026-03-01", "views": 2536}, {"date": "2026-03-02", "views": 2538}, {"date": "2026-03-03", "views": 2541}, {"date": "2026-03-04", "views": 2544}, {"date": "2026-03-05", "views": 2545}, {"date": "2026-03-06", "views": 2547}, {"date": "2026-03-07", "views": 2548}, {"date": "2026-03-08", "views": 2550}, {"date": "2026-03-09", "views": 2552}, {"date": "2026-03-10", "views": 2554}, {"date": "2026-03-11", "views": 2554}, {"date": "2026-03-12", "views": 2556}, {"date": "2026-03-13", "views": 2558}, {"date": "2026-03-14", "views": 2559}, {"date": "2026-03-15", "views": 2563}, {"date": "2026-03-16", "views": 2567}, {"date": "2026-03-17", "views": 2568}, {"date": "2026-03-18", "views": 2570}, {"date": "2026-03-19", "views": 2571}, {"date": "2026-03-20", "views": 2572}, {"date": "2026-03-21", "views": 2573}, {"date": "2026-03-22", "views": 2574}, {"date": "2026-03-23", "views": 2575}, {"date": "2026-03-24", "views": 2577}, {"date": "2026-03-25", "views": 2579}, {"date": "2026-03-26", "views": 2581}, {"date": "2026-03-27", "views": 2583}, {"date": "2026-03-28", "views": 2585}, {"date": "2026-03-29", "views": 2594}, {"date": "2026-03-30", "views": 2597}, {"date": "2026-03-31", "views": 2600}, {"date": "2026-04-01", "views": 2603}, {"date": "2026-04-02", "views": 2606}, {"date": "2026-04-03", "views": 2609}, {"date": "2026-04-04", "views": 2612}, {"date": "2026-04-05", "views": 2619}, {"date": "2026-04-06", "views": 2626}, {"date": "2026-04-07", "views": 2633}, {"date": "2026-04-08", "views": 2640}, {"date": "2026-04-09", "views": 2647}, {"date": "2026-04-10", "views": 2654}, {"date": "2026-04-11", "views": 2658}, {"date": "2026-04-12", "views": 2662}, {"date": "2026-04-13", "views": 2666}, {"date": "2026-04-14", "views": 2670}, {"date": "2026-04-15", "views": 2674}, {"date": "2026-04-16", "views": 2678}, {"date": "2026-04-17", "views": 2682}, {"date": "2026-04-18", "views": 2686}, {"date": "2026-04-19", "views": 2690}, {"date": "2026-04-20", "views": 2690}, {"date": "2026-04-21", "views": 2690}, {"date": "2026-04-22", "views": 2698}, {"date": "2026-04-23", "views": 2703}, {"date": "2026-04-24", "views": 2708}, {"date": "2026-04-25", "views": 2713}, {"date": "2026-04-26", "views": 2718}, {"date": "2026-04-27", "views": 2723}, {"date": "2026-04-28", "views": 2730}, {"date": "2026-04-29", "views": 2733}, {"date": "2026-04-30", "views": 2736}, {"date": "2026-05-01", "views": 2739}, {"date": "2026-05-02", "views": 2741}, {"date": "2026-05-03", "views": 2743}, {"date": "2026-05-04", "views": 2745}, {"date": "2026-05-05", "views": 2747}, {"date": "2026-05-06", "views": 2750}, {"date": "2026-05-07", "views": 2753}, {"date": "2026-05-08", "views": 2756}, {"date": "2026-05-09", "views": 2759}, {"date": "2026-05-10", "views": 2762}, {"date": "2026-05-11", "views": 2765}, {"date": "2026-05-12", "views": 2766}, {"date": "2026-05-13", "views": 2768}, {"date": "2026-05-14", "views": 2770}, {"date": "2026-05-15", "views": 2772}, {"date": "2026-05-16", "views": 2774}, {"date": "2026-05-17", "views": 2776}, {"date": "2026-05-18", "views": 2778}, {"date": "2026-05-19", "views": 2780}, {"date": "2026-05-20", "views": 2782}, {"date": "2026-05-21", "views": 2784}, {"date": "2026-05-22", "views": 2786}, {"date": "2026-05-23", "views": 2788}, {"date": "2026-05-24", "views": 2790}, {"date": "2026-05-25", "views": 2792}, {"date": "2026-05-26", "views": 2804}, {"date": "2026-05-27", "views": 2805}, {"date": "2026-05-28", "views": 2806}, {"date": "2026-05-29", "views": 2807}, {"date": "2026-05-30", "views": 2808}, {"date": "2026-05-31", "views": 2809}, {"date": "2026-06-01", "views": 2810}, {"date": "2026-06-02", "views": 2812}, {"date": "2026-06-03", "views": 2815}, {"date": "2026-06-04", "views": 2818}, {"date": "2026-06-05", "views": 2821}, {"date": "2026-06-06", "views": 2824}, {"date": "2026-06-07", "views": 2831}, {"date": "2026-06-08", "views": 2834}, {"date": "2026-06-09", "views": 2837}, {"date": "2026-06-10", "views": 2840}, {"date": "2026-06-11", "views": 2843}, {"date": "2026-06-12", "views": 2846}, {"date": "2026-06-13", "views": 2849}, {"date": "2026-06-14", "views": 2853}, {"date": "2026-06-15", "views": 2853}, {"date": "2026-06-16", "views": 2866}, {"date": "2026-06-17", "views": 2869}, {"date": "2026-06-18", "views": 2872}, {"date": "2026-06-19", "views": 2875}, {"date": "2026-06-20", "views": 2878}, {"date": "2026-06-21", "views": 2882}, {"date": "2026-06-22", "views": 2892}, {"date": "2026-06-23", "views": 2896}, {"date": "2026-06-24", "views": 2900}, {"date": "2026-06-25", "views": 2904}, {"date": "2026-06-26", "views": 2908}, {"date": "2026-06-27", "views": 2912}, {"date": "2026-06-28", "views": 2919}, {"date": "2026-06-29", "views": 2926}, {"date": "2026-06-30", "views": 2934}, {"date": "2026-07-01", "views": 2937}, {"date": "2026-07-02", "views": 2940}, {"date": "2026-07-03", "views": 2943}, {"date": "2026-07-04", "views": 2946}, {"date": "2026-07-05", "views": 2949}, {"date": "2026-07-06", "views": 2952}, {"date": "2026-07-07", "views": 2955}, {"date": "2026-07-08", "views": 2956}, {"date": "2026-07-09", "views": 2966}]};</script>
+<script>
+(function(){
+  const SHEET_ID = '1YKiQPMtUzd-AwU2cBYVozwfgKVRsHhrTBbc4KFFBQOM';
+  const sheetUrl = name => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+
+  // ---- minimal CSV parser (handles quoted fields, embedded commas/newlines) ----
+  function parseCSV(text){
+    const rows = []; let row = [], field = '', inQ = false;
+    for(let i=0;i<text.length;i++){
+      const c = text[i];
+      if(inQ){
+        if(c === '"'){ if(text[i+1] === '"'){ field+='"'; i++; } else inQ=false; }
+        else field += c;
+      } else {
+        if(c === '"') inQ = true;
+        else if(c === ','){ row.push(field); field=''; }
+        else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+        else if(c === '\r'){ /* skip */ }
+        else field += c;
+      }
+    }
+    if(field.length || row.length){ row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  function toNum(s){
+    if(s==null) return NaN;
+    s = String(s).trim().replace(/,/g,'');
+    return s===''? NaN : parseFloat(s);
+  }
+  function parseDateFlexible(s){
+    if(!s) return null;
+    s = s.trim();
+    let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(m) return `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+    m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if(m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d.toISOString().slice(0,10);
+  }
+  const r1 = v => v==null || isNaN(v) ? null : Math.round(v*10)/10;
+
+  function withTimeout(promise, ms){
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(()=> reject(new Error('timeout after '+ms+'ms')), ms);
+      promise.then(v=>{ clearTimeout(timer); resolve(v); }, e=>{ clearTimeout(timer); reject(e); });
+    });
+  }
+
+  async function fetchSheet(name, timeoutMs){
+    const res = await withTimeout(fetch(sheetUrl(name)), timeoutMs);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return parseCSV(await res.text());
+  }
+
+  function parseTimeOfDay(s){
+    if(!s) return null;
+    s = s.trim();
+    let m = s.match(/\b(\d{1,2}):(\d{2})(?::\d{2})?\b/);
+    if(!m) return null;
+    let hh = m[1].padStart(2,'0'), mm = m[2];
+    return `${hh}:${mm}`;
+  }
+
+  async function loadLiveData(){
+    const [wRows, hRows, aRows, vRows] = await Promise.all([
+      fetchSheet('weather', 9000),
+      fetchSheet('hospital info', 9000),
+      fetchSheet('Ambulance', 9000),
+      fetchSheet('views', 9000),
+    ]);
+
+    const weather = [];
+    for(let i=1;i<wRows.length;i++){
+      const r = wRows[i]; if(!r || !r[0]) continue;
+      const date = parseDateFlexible(r[0]); if(!date) continue;
+      const m1 = toNum(r[2]), m2 = toNum(r[3]);
+      if(isNaN(m1) || isNaN(m2)) continue;
+      if(m1===0 && m2===0) continue;
+      const hi = Math.max(m1,m2), lo = Math.min(m1,m2);
+      const sig = (r[11]||'').trim();
+      weather.push({
+        date, hi:r1(hi), lo:r1(lo), avg:r1(toNum(r[4])),
+        current:r1(toNum(r[5])), rain:r1(toNum(r[6])), hum:r1(toNum(r[7])),
+        heatwave: sig !== '' && sig !== 'তাপ প্রবাহ নেই',
+        time: parseTimeOfDay(r[12]),
+      });
+    }
+    weather.sort((a,b)=> a.date.localeCompare(b.date));
+
+    const hr = hRows[1] || [];
+    const hospital = {
+      name: hr[1]||'', address: hr[2]||'',
+      lon: toNum(hr[3]), lat: toNum(hr[4]),
+      website: hr[5]||'', phone: hr[6]||'', details: hr[7]||'',
+      total_beds: parseInt(hr[8])||0, general_beds: parseInt(hr[9])||0, icu_beds: parseInt(hr[10])||0,
+    };
+
+    const ambulances = [];
+    for(let i=1;i<aRows.length;i++){
+      const r = aRows[i]; if(!r || !r[1]) continue;
+      ambulances.push({contact:r[1]||'', phone:r[2]||'', vehicle:r[3]||null, hospital:r[4]||''});
+    }
+
+    const views = [];
+    for(let i=1;i<vRows.length;i++){
+      const r = vRows[i]; if(!r || !r[0]) continue;
+      const date = parseDateFlexible(r[0]); if(!date) continue;
+      const av = parseInt(toNum(r[3])); if(isNaN(av)) continue;
+      views.push({date, views: av});
+    }
+    views.sort((a,b)=> a.date.localeCompare(b.date));
+
+    if(!weather.length || !hospital.name) throw new Error('empty live data');
+    return {hospital, ambulances, weather, views};
+  }
+
+  function renderDashboard(D, isLive){
+    const W = D.weather, V = D.views, H = D.hospital, A = D.ambulances;
+    const latest = W[W.length-1], first = W[0];
+
+    document.getElementById('dateRangeLabel').textContent =
+      first.date + ' — ' + latest.date + ' পর্যন্ত রেকর্ড';
+    document.getElementById('footRange').textContent =
+      W.length + ' দিনের তথ্য · ' + first.date + ' থেকে ' + latest.date;
+    document.getElementById('lastUpdated').textContent = latest.time ? (latest.date + ' ' + latest.time) : latest.date;
+    document.getElementById('sourceBadge').textContent =
+      isLive ? '· লাইভ (Google Sheets)' : '· স্ন্যাপশট (অফলাইন কপি)';
+
+    const curTemp = latest.current ?? latest.avg;
+    const pct = Math.max(0, Math.min(1, (curTemp - 15) / (40 - 15)));
+    const circumference = 2 * Math.PI * 74;
+    const fill = document.getElementById('gaugeFill');
+    fill.setAttribute('stroke-dasharray', circumference.toFixed(1));
+    requestAnimationFrame(()=> { fill.style.strokeDashoffset = (circumference * (1 - pct)).toFixed(1); });
+    document.getElementById('gaugeVal').textContent = curTemp.toFixed(1);
+    document.getElementById('metaHi').textContent = latest.hi.toFixed(1) + '°';
+    document.getElementById('metaLo').textContent = latest.lo.toFixed(1) + '°';
+    document.getElementById('metaAvg').textContent = latest.avg.toFixed(1) + '°';
+    document.getElementById('statHum').innerHTML = (latest.hum ?? '—') + '<span>%</span>';
+    document.getElementById('statRain').innerHTML = (latest.rain ?? '—') + '<span> মিমি</span>';
+
+    const pill = document.getElementById('statusPill');
+    const statusText = document.getElementById('statusText');
+    if(latest.heatwave){ pill.classList.add('alert'); statusText.textContent = 'সক্রিয় তাপপ্রবাহ সতর্কতা'; }
+    else statusText.textContent = 'কোনো তাপপ্রবাহ সতর্কতা নেই';
+
+    document.getElementById('hospName').textContent = H.name;
+    document.getElementById('hospAddr').textContent = H.address;
+    document.getElementById('bedTotal').textContent = H.total_beds;
+    document.getElementById('bedGen').textContent = H.general_beds;
+    document.getElementById('bedIcu').textContent = H.icu_beds;
+    document.getElementById('hospPhone').textContent = H.phone;
+    const webEl = document.getElementById('hospWeb');
+    webEl.textContent = H.website; webEl.href = H.website;
+    document.getElementById('hospDetails').textContent = H.details;
+
+    const ambBody = document.getElementById('ambBody');
+    ambBody.innerHTML = '';
+    A.forEach(a=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="name"></td><td class="phone"></td><td class="veh"></td><td></td>`;
+      tr.children[0].textContent = a.contact;
+      tr.children[1].textContent = a.phone;
+      tr.children[2].textContent = a.vehicle ?? '—';
+      tr.children[3].textContent = a.hospital;
+      ambBody.appendChild(tr);
+    });
+
+    const totalViews = V.length ? V[V.length-1].views : 0;
+    document.getElementById('viewsTotal').textContent = totalViews.toLocaleString('en-US');
+
+    // ---- hand-rolled, time-correct SVG charts ----
+    const NS = 'http://www.w3.org/2000/svg';
+    const el = (tag, attrs) => { const e = document.createElementNS(NS, tag); for(const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+    const dayMs = 86400000;
+    const toTime = ds => Date.parse(ds + 'T00:00:00Z');
+    const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const fmtTick = t => { const d = new Date(t); return d.getUTCDate()+' '+MONTHS[d.getUTCMonth()]+" '"+String(d.getUTCFullYear()).slice(2); };
+    const W7 = W.slice(-7);
+
+    function renderTempChart(){
+      const svg = document.getElementById('tempChart');
+      svg.innerHTML = '';
+      const VW=640, VH=240, padL=34, padR=10, padT=10, padB=24;
+      const innerW = VW-padL-padR, innerH = VH-padT-padB;
+      const times = W7.map(d=>toTime(d.date));
+      const minT = times[0], maxT = times[times.length-1];
+      const span = Math.max(1, maxT-minT);
+      const x = t => padL + (t-minT)/span*innerW;
+      const vals = W7.flatMap(d=>[d.hi,d.lo,d.avg]).filter(v=>v!=null);
+      const minV = Math.floor(Math.min(...vals)/2)*2 - 2;
+      const maxV = Math.ceil(Math.max(...vals)/2)*2 + 2;
+      const y = v => padT + innerH - ((v-minV)/(maxV-minV))*innerH;
+
+      for(let g=0; g<=4; g++){
+        const val = minV + (maxV-minV)*g/4;
+        const yy = y(val);
+        svg.appendChild(el('line',{x1:padL,x2:VW-padR,y1:yy.toFixed(1),y2:yy.toFixed(1),stroke:'#e3d9c6','stroke-width':1}));
+        const t = el('text',{x:2,y:(yy+3).toFixed(1),fill:'#8c8073','font-size':9,'font-family':'JetBrains Mono, monospace'});
+        t.textContent = Math.round(val)+'°'; svg.appendChild(t);
+      }
+      const tickN = times.length;
+      for(let t=0;t<tickN;t++){
+        const tt = times[t];
+        const xx = x(tt);
+        const lab = el('text',{x:xx.toFixed(1),y:VH-6,fill:'#8c8073','font-size':9,'text-anchor':t===0?'start':(t===tickN-1?'end':'middle'),'font-family':'JetBrains Mono, monospace'});
+        lab.textContent = fmtTick(tt); svg.appendChild(lab);
+      }
+
+      function buildPath(key){
+        let d=''; let prevT=null;
+        W7.forEach(pt=>{
+          const v = pt[key];
+          const t = toTime(pt.date);
+          if(v==null){ prevT=null; return; }
+          const gapDays = prevT==null ? 0 : (t-prevT)/dayMs;
+          d += (prevT===null || gapDays>2 ? 'M':'L') + x(t).toFixed(1) + ',' + y(v).toFixed(1) + ' ';
+          prevT = t;
+        });
+        return d;
+      }
+      svg.appendChild(el('path',{d:buildPath('hi'), fill:'none', stroke:'#e14a2a','stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));
+      svg.appendChild(el('path',{d:buildPath('avg'), fill:'none', stroke:'#c98815','stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));
+      svg.appendChild(el('path',{d:buildPath('lo'), fill:'none', stroke:'#2f7fb0','stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));
+
+      const tooltip = document.getElementById('tempTooltip');
+      const hoverLine = el('line',{x1:0,x2:0,y1:padT,y2:VH-padB,stroke:'#b7a892','stroke-width':1,opacity:0});
+      svg.appendChild(hoverLine);
+      const hitRect = el('rect',{x:padL,y:padT,width:innerW,height:innerH,fill:'transparent'});
+      svg.appendChild(hitRect);
+      hitRect.addEventListener('mousemove', e=>{
+        const rect = svg.getBoundingClientRect();
+        const relX = (e.clientX-rect.left) / rect.width * VW;
+        const tt = minT + Math.max(0,Math.min(1,(relX-padL)/innerW))*span;
+        let idx = 0, best = Infinity;
+        for(let i=0;i<times.length;i++){ const dd = Math.abs(times[i]-tt); if(dd<best){best=dd; idx=i;} }
+        const pt = W7[idx];
+        hoverLine.setAttribute('x1', x(times[idx]).toFixed(1));
+        hoverLine.setAttribute('x2', x(times[idx]).toFixed(1));
+        hoverLine.setAttribute('opacity', 1);
+        tooltip.innerHTML = `${pt.date}<br>সর্বোচ্চ ${pt.hi}° · গড় ${pt.avg}° · সর্বনিম্ন ${pt.lo}°`;
+        tooltip.style.left = (e.clientX-rect.left)+'px';
+        tooltip.style.top = (e.clientY-rect.top)+'px';
+        tooltip.classList.add('active');
+      });
+      hitRect.addEventListener('mouseleave', ()=>{ hoverLine.setAttribute('opacity',0); tooltip.classList.remove('active'); });
+    }
+
+    function renderHumChart(){
+      const svg = document.getElementById('humChart');
+      svg.innerHTML = '';
+      const VW=640, VH=240, padL=30, padR=32, padT=10, padB=24;
+      const innerW = VW-padL-padR, innerH = VH-padT-padB;
+      const times = W7.map(d=>toTime(d.date));
+      const minT = times[0], maxT = times[times.length-1];
+      const span = Math.max(1, maxT-minT);
+      const x = t => padL + (t-minT)/span*innerW;
+      const rainVals = W7.map(d=>d.rain).filter(v=>v!=null);
+      const humMax = 100;
+      const rainMax = Math.max(10, Math.ceil((Math.max(...rainVals,0))/10)*10);
+      const yHum = v => padT + innerH - (v/humMax)*innerH;
+      const yRain = v => padT + innerH - (v/rainMax)*innerH;
+
+      for(let g=0; g<=4; g++){
+        const yy = padT + innerH*g/4;
+        svg.appendChild(el('line',{x1:padL,x2:VW-padR,y1:yy.toFixed(1),y2:yy.toFixed(1),stroke:'#e3d9c6','stroke-width':1}));
+        const humLab = el('text',{x:2,y:(yy+3).toFixed(1),fill:'#8c8073','font-size':9,'font-family':'JetBrains Mono, monospace'});
+        humLab.textContent = Math.round(humMax*(1-g/4))+'%'; svg.appendChild(humLab);
+        const rainLab = el('text',{x:VW-4,y:(yy+3).toFixed(1),fill:'#8c8073','font-size':9,'text-anchor':'end','font-family':'JetBrains Mono, monospace'});
+        rainLab.textContent = Math.round(rainMax*(1-g/4))+'mm'; svg.appendChild(rainLab);
+      }
+      const tickN = times.length;
+      for(let t=0;t<tickN;t++){
+        const tt = times[t];
+        const lab = el('text',{x:x(tt).toFixed(1),y:VH-6,fill:'#8c8073','font-size':9,'text-anchor':t===0?'start':(t===tickN-1?'end':'middle'),'font-family':'JetBrains Mono, monospace'});
+        lab.textContent = fmtTick(tt); svg.appendChild(lab);
+      }
+
+      const barW = Math.max(1, innerW/Math.max(1,W7.length)*0.6);
+      W7.forEach(pt=>{
+        if(pt.rain==null) return;
+        const xx = x(toTime(pt.date));
+        const yy = yRain(pt.rain);
+        svg.appendChild(el('rect',{x:(xx-barW/2).toFixed(1), y:yy.toFixed(1), width:barW.toFixed(1), height:(padT+innerH-yy).toFixed(1), fill:'rgba(26,146,104,.5)'}));
+      });
+
+      let d=''; let prevT=null;
+      W7.forEach(pt=>{
+        const t = toTime(pt.date);
+        if(pt.hum==null){ prevT=null; return; }
+        const gapDays = prevT==null?0:(t-prevT)/dayMs;
+        d += (prevT===null||gapDays>2 ? 'M':'L') + x(t).toFixed(1) + ',' + yHum(pt.hum).toFixed(1) + ' ';
+        prevT = t;
+      });
+      svg.appendChild(el('path',{d, fill:'none', stroke:'#2f7fb0','stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));
+
+      const tooltip = document.getElementById('humTooltip');
+      const hoverLine = el('line',{x1:0,x2:0,y1:padT,y2:VH-padB,stroke:'#b7a892','stroke-width':1,opacity:0});
+      svg.appendChild(hoverLine);
+      const hitRect = el('rect',{x:padL,y:padT,width:innerW,height:innerH,fill:'transparent'});
+      svg.appendChild(hitRect);
+      hitRect.addEventListener('mousemove', e=>{
+        const rect = svg.getBoundingClientRect();
+        const relX = (e.clientX-rect.left) / rect.width * VW;
+        const tt = minT + Math.max(0,Math.min(1,(relX-padL)/innerW))*span;
+        let idx = 0, best = Infinity;
+        for(let i=0;i<times.length;i++){ const dd = Math.abs(times[i]-tt); if(dd<best){best=dd; idx=i;} }
+        const pt = W7[idx];
+        hoverLine.setAttribute('x1', x(times[idx]).toFixed(1));
+        hoverLine.setAttribute('x2', x(times[idx]).toFixed(1));
+        hoverLine.setAttribute('opacity', 1);
+        tooltip.innerHTML = `${pt.date}<br>আর্দ্রতা ${pt.hum ?? '—'}% · বৃষ্টি ${pt.rain ?? '—'}mm`;
+        tooltip.style.left = (e.clientX-rect.left)+'px';
+        tooltip.style.top = (e.clientY-rect.top)+'px';
+        tooltip.classList.add('active');
+      });
+      hitRect.addEventListener('mouseleave', ()=>{ hoverLine.setAttribute('opacity',0); tooltip.classList.remove('active'); });
+    }
+
+    function renderViewsSpark(){
+      const svg = document.getElementById('viewsChart');
+      svg.innerHTML = '';
+      const VW=300, VH=60;
+      if(!V.length) return;
+      const times = V.map(d=>toTime(d.date));
+      const minT = times[0], maxT = times[times.length-1];
+      const span = Math.max(1, maxT-minT);
+      const x = t => (t-minT)/span*VW;
+      const vals = V.map(d=>d.views);
+      const minV = Math.min(...vals), maxV = Math.max(...vals);
+      const y = v => VH - ((v-minV)/(maxV-minV||1))*(VH-6) - 3;
+      let d='';
+      V.forEach(pt=>{ d += (d===''?'M':'L') + x(toTime(pt.date)).toFixed(1) + ',' + y(pt.views).toFixed(1) + ' '; });
+      const areaD = d + `L${VW},${VH} L0,${VH} Z`;
+      svg.appendChild(el('path',{d:areaD, fill:'rgba(26,146,104,.14)', stroke:'none'}));
+      svg.appendChild(el('path',{d, fill:'none', stroke:'#1a9268','stroke-width':1.8,'stroke-linejoin':'round','stroke-linecap':'round'}));
+    }
+
+    renderTempChart();
+    renderHumChart();
+    renderViewsSpark();
+  }
+
+  const REFRESH_MS = 10 * 60 * 1000; // re-check the Google Sheet every 10 minutes
+  let hasRenderedOnce = false;
+
+  function setRefreshBadge(text){
+    const b = document.getElementById('refreshBadge');
+    if(b) b.textContent = text;
+  }
+  function nowHM(){
+    const d = new Date();
+    return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
+  }
+
+  async function refreshCycle(){
+    try{
+      const live = await loadLiveData();
+      renderDashboard(live, true);
+      hasRenderedOnce = true;
+      setRefreshBadge('প্রতি ১০ মিনিটে অটো-রিফ্রেশ · সর্বশেষ যাচাই ' + nowHM());
+    } catch(err){
+      console.warn('Live Google Sheets fetch failed:', err);
+      if(!hasRenderedOnce){
+        // first load failed — fall back to the bundled snapshot so the page isn't blank
+        renderDashboard(DASH_DATA, false);
+        hasRenderedOnce = true;
+      }
+      setRefreshBadge('সংযোগ ব্যর্থ · সর্বশেষ চেষ্টা ' + nowHM() + ' · পরের চেষ্টা ১০ মিনিটে');
+    }
+  }
+
+  refreshCycle();
+  setInterval(refreshCycle, REFRESH_MS);
+})();
+</script>
+</body>
+</html>
