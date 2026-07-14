@@ -436,16 +436,11 @@
   <div class="panel views-card">
     <div class="views-num-block">
       <div class="views-num" id="viewsTotal">—</div>
-      <div class="views-lbl" id="viewsSubLabel">লোড হচ্ছে…</div>
     </div>
     <div class="chart-wrap" style="flex:1;min-width:0;">
       <svg id="viewsChart" viewBox="0 0 640 180" preserveAspectRatio="none"></svg>
       <div class="chart-tooltip" id="viewsTooltip"></div>
     </div>
-  </div>
-  <div class="legend-row" style="margin-top:10px;">
-    <div class="item"><span class="sw" style="background:#1a9268"></span>শিট থেকে (দৈনিক)</div>
-    <div class="item"><span class="sw" style="background:#e14a2a"></span>আজকের লাইভ স্বয়ংক্রিয় গণনা</div>
   </div>
 
 
@@ -647,15 +642,12 @@
   function renderViewsSection(){
     const V = lastViewsSeries;
     const totalEl = document.getElementById('viewsTotal');
-    const lblEl = document.getElementById('viewsSubLabel');
     if(!totalEl) return;
-    if(!V.length){ totalEl.textContent = '—'; lblEl.textContent = 'তথ্য নেই'; return; }
+    if(!V.length){ totalEl.textContent = '—'; return; }
 
     const sheetTotal = V[V.length-1].views;
     const merged = sheetTotal + (liveCountValue || 0);
     totalEl.textContent = merged.toLocaleString('en-US');
-    lblEl.textContent = 'মোট ভিউ · শিট ' + sheetTotal.toLocaleString('en-US') +
-      (liveCountValue == null ? ' + লাইভ গণনা লোড হচ্ছে…' : ' + লাইভ ' + liveCountValue.toLocaleString('en-US'));
 
     // convert the sheet's cumulative running total into a daily trend
     const daily = V.map((d,i)=>({
@@ -708,7 +700,7 @@
       const yy = y(d.count);
       svg.appendChild(svgEl('rect',{
         x:(xx-barW/2).toFixed(1), y:yy.toFixed(1), width:barW.toFixed(1), height:(padT+innerH-yy).toFixed(1),
-        fill: d.isLive ? 'rgba(225,74,42,.65)' : 'rgba(26,146,104,.55)', rx:2,
+        fill: 'rgba(26,146,104,.55)', rx:2,
       }));
     });
 
@@ -732,7 +724,9 @@
     const W = D.weather, V = D.views, H = D.hospital, A = D.ambulances;
     const latest = W[W.length-1], first = W[0];
 
-    renderForecast(D.forecast || []);
+    const todayStrFc = new Date().toISOString().slice(0,10);
+    const upcomingForecast = (D.forecast || []).filter(f => f.date > todayStrFc).slice(0, 2);
+    renderForecast(upcomingForecast);
 
     document.getElementById('dateRangeLabel').textContent =
       first.date + ' — ' + latest.date + ' পর্যন্ত রেকর্ড';
