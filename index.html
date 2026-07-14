@@ -430,14 +430,20 @@
   </div>
 
   <!-- FOOTER STATS -->
-  <div class="section-title"><h2>ড্যাশবোর্ড রিচ</h2><span class="tag">Views over time</span></div>
-  <div class="foot-grid" style="grid-template-columns:1fr;">
+  <div class="section-title"><h2>ড্যাশবোর্ড রিচ</h2><span class="tag">Views</span></div>
+  <div class="foot-grid" style="grid-template-columns:1fr 1fr;">
     <div class="panel views-card">
       <div>
         <div class="views-num" id="viewsTotal">—</div>
-        <div class="views-lbl">মোট ভিউ (সংগৃহীত সময়কালে)</div>
+        <div class="views-lbl">মোট ভিউ (সংগৃহীত সময়কালে, শিট থেকে)</div>
       </div>
       <div class="sparkwrap"><svg id="viewsChart" viewBox="0 0 300 60" preserveAspectRatio="none" style="width:100%;height:100%;display:block;"></svg></div>
+    </div>
+    <div class="panel views-card">
+      <div>
+        <div class="views-num" id="liveViewsTotal">—</div>
+        <div class="views-lbl">স্বয়ংক্রিয় ভিউ কাউন্ট (লাইভ, এই পেজেই গণনা হয়)</div>
+      </div>
     </div>
   </div>
 
@@ -621,6 +627,7 @@
         <div class="fc-row"><span class="fc-label">সর্বনিম্ন তাপমাত্রা</span><span class="fc-val lo">${f.lo ?? '—'}°</span></div>
         <div class="fc-row"><span class="fc-label">বৃষ্টিপাত</span><span class="fc-val">${f.rainMm ?? 0} মিমি</span></div>
         <div class="fc-heat">${f.heatSignal || 'তথ্য নেই'}</div>
+        <div class="fc-heat" style="color:var(--rain-500);margin-top:4px;padding-top:0;border-top:none;font-weight:500;">${f.rainSignal || 'তথ্য নেই'}</div>
       `;
       strip.appendChild(card);
     });
@@ -899,6 +906,26 @@
 
   refreshCycle(false);
   setInterval(()=>refreshCycle(false), REFRESH_MS);
+
+  // ---- automatic live view counter (independent of the Google Sheet 'views' tab) ----
+  // Uses a free, no-signup, no-API-key hit counter — increments once per real page load.
+  (async function countLiveView(){
+    const el = document.getElementById('liveViewsTotal');
+    const key = 'dncc_heatstroke_dashboard_' + SHEET_ID; // unique key tied to this dashboard
+    try{
+      const ctrl = new AbortController();
+      const timer = setTimeout(()=>ctrl.abort(), 6000);
+      const res = await fetch('https://countapi.mileshilliard.com/api/v1/hit/' + key, {signal: ctrl.signal});
+      clearTimeout(timer);
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      const data = await res.json();
+      el.textContent = Number(data.value).toLocaleString('en-US');
+    } catch(err){
+      console.warn('Live view counter unavailable:', err);
+      el.textContent = '—';
+      el.title = 'গণনা সার্ভারে সংযোগ ব্যর্থ হয়েছে';
+    }
+  })();
 })();
 </script>
 </body>
