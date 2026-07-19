@@ -649,21 +649,11 @@
     const merged = sheetTotal + (liveCountValue || 0);
     totalEl.textContent = merged.toLocaleString('en-US');
 
-    // convert the sheet's cumulative running total into a daily trend
+    // chart uses sheet-derived daily counts only (the live counter still feeds the merged total above, not the bars)
     const daily = V.map((d,i)=>({
       date: d.date,
       count: Math.max(0, i===0 ? d.views : d.views - V[i-1].views),
-      isLive: false,
     }));
-    const todayStr = new Date().toISOString().slice(0,10);
-    if(liveCountValue != null){
-      if(daily.length && daily[daily.length-1].date === todayStr){
-        daily[daily.length-1].count += liveCountValue;
-        daily[daily.length-1].isLive = true;
-      } else {
-        daily.push({date: todayStr, count: liveCountValue, isLive: true});
-      }
-    }
     renderViewsTrendChart(daily.slice(-30)); // last 30 days keeps the bars readable
   }
 
@@ -712,7 +702,7 @@
       const relX = (e.clientX-rect.left) / rect.width * VW;
       const idx = Math.max(0, Math.min(n-1, Math.round((relX-padL)/innerW*(n-1))));
       const d = daily[idx];
-      tooltip.innerHTML = `${d.date}${d.isLive ? ' (আজ, লাইভ)' : ''}<br>${d.count.toLocaleString('en-US')} ভিউ`;
+      tooltip.innerHTML = `${d.date}<br>${d.count.toLocaleString('en-US')} ভিউ`;
       tooltip.style.left = (e.clientX-rect.left)+'px';
       tooltip.style.top = (e.clientY-rect.top)+'px';
       tooltip.classList.add('active');
